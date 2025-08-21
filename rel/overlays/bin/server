@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+
+cd -P -- "$(dirname -- "$0")"
+./savvy_flags eval SavvyFlags.Release.migrate
+PHX_SERVER=true exec ./savvy_flags start

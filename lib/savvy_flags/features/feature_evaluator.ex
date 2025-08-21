@@ -1,0 +1,148 @@
+defmodule SavvyFlags.Features.FeatureEvaluator do
+  alias SavvyFlags.FeatureCache
+  alias SavvyFlags.Features.Feature
+  alias SavvyFlags.Features.FeatureRule
+  alias SavvyFlags.Features.FeatureRuleCondition
+
+  def eval(features, params) when is_list(features) do
+    features
+    |> Enum.into(%{}, &{&1.key, eval(&1, params)})
+  end
+
+  def eval(%Feature{} = feature, params) do
+    value = feature.default_value.value
+
+    Enum.reduce_while(feature.feature_rules, value, fn feature_rule, initial_value ->
+      if eval(feature_rule, params) do
+        {:halt, feature_rule.value.value}
+      else
+        {:cont, initial_value}
+      end
+    end)
+  end
+
+  def eval(%FeatureRule{} = feature_rule, params) do
+    Enum.all?(feature_rule.feature_rule_conditions, fn feature_rule_condition ->
+      eval(feature_rule_condition, params)
+    end)
+  end
+
+  def eval(%FeatureRuleCondition{} = feature_rule_condition, params) do
+    attribute_value =
+      Map.get(params, feature_rule_condition.attribute.name) ||
+        Map.get(params, :"#{feature_rule_condition.attribute.name}") || ""
+
+    compare(
+      attribute_value,
+      maybe_parse(feature_rule_condition.value),
+      feature_rule_condition.type
+    )
+  end
+
+  def compare(attribute_value, value, :match_regex) do
+    Regex.match?(~r/#{value}/, attribute_value)
+  end
+
+  def compare(attribute_value, value, :not_match_regex) do
+    !Regex.match?(~r/#{value}/, attribute_value)
+  end
+
+  def compare(attribute_value, value, :equal) do
+    attribute_value == value
+  end
+
+  def compare(attribute_value, value, :not_equal) do
+    attribute_value != value
+  end
+
+  def compare("", _, type) when type in [:gt, :gt_or_equal, :lt, :lt_or_equal] do
+    false
+  end
+
+  def compare(attribute_value, value, type)
+      when type in [:gt, :gt_or_equal, :lt, :lt_or_equal] do
+    attribute_value = parse_value(attribute_value)
+    value = parse_value(value)
+
+    case type do
+      :gt -> attribute_value > value
+      :gt_or_equal -> attribute_value >= value
+      :lt -> attribute_value < value
+      :lt_or_equal -> attribute_value <= value
+    end
+  end
+
+  def compare(attribute_value, value, :in) do
+    value = String.split(value, ",") |> Enum.map(&String.trim(&1))
+    attribute_value in value
+  end
+
+  def compare(attribute_value, value, :not_in) do
+    value = String.split(value, ",") |> Enum.map(&String.trim(&1))
+    attribute_value not in value
+  end
+
+  def compare(nil, _, :sample) do
+    false
+  end
+
+  def compare(attribute_value, value, :sample) do
+    normalized_number = rem(Murmur.hash_x86_32(attribute_value, 0), 100) + 1
+    normalized_number < String.to_integer(value)
+  end
+
+  defp parse_value(value) when is_integer(value) do
+    value / 100 * 100
+  end
+
+  defp parse_value(value) when is_binary(value) do
+    {value, _} = Float.parse(value)
+    value
+  end
+
+  def build_plain_payload(sdk_connection, features, cache \\ true) do
+    Enum.reduce(features, %{}, fn feature, acc ->
+      cache &&
+        FeatureCache.push_unique("feature:#{feature.reference}:sdks", sdk_connection.reference)
+
+      Map.put(acc, :"#{feature.key}", %{
+        default_value: feature.default_value.value,
+        type: feature.default_value.type,
+        rules:
+          Enum.map(feature.feature_rules, fn fr ->
+            %{
+              value: maybe_parse(fr.value.value),
+              condition:
+                Enum.reduce(fr.feature_rule_conditions, %{}, fn frc, acc2 ->
+                  Map.put(acc2, :"#{frc.attribute.name}", %{
+                    "#{frc.type}": maybe_parse(frc.value, frc.type)
+                  })
+                end)
+            }
+          end)
+      })
+    end)
+  end
+
+  defp maybe_parse(value, type \\ nil)
+
+  defp maybe_parse(value, type) when type in [:in, :not_in] do
+    value
+    |> String.split(",")
+    |> Enum.map(&maybe_parse(&1, nil))
+  end
+
+  defp maybe_parse(value, _) do
+    case Integer.parse(value) do
+      {value, ""} ->
+        value
+
+      {_, ".0"} ->
+        {value, _} = Float.parse(value)
+        value
+
+      _ ->
+        value
+    end
+  end
+end

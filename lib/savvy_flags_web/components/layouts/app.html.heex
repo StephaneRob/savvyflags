@@ -1,0 +1,41 @@
+<main class="">
+  <.flash_group flash={@flash} />
+  <div class="flex min-h-full">
+    <div :if={assigns[:current_user]} class="px-0 py-3 min-h-full">
+      <ul class="flex flex-col gap-2 px-4 w-52">
+        <%!-- <.navlink label="Home" navigate={~p"/home"} active={@active_nav == :home} /> --%>
+        <li class="font-semibold text-neutral-800">Features</li>
+        <.navlink label="Features" navigate={~p"/features"} active={@active_nav == :features} />
+        <.navlink
+          label="Attributes"
+          navigate={~p"/attributes"}
+          active={@active_nav == :attributes}
+        />
+        <.navlink
+          label="Environments"
+          navigate={~p"/environments"}
+          active={@active_nav == :environments}
+        />
+        <.navlink label="Projects" navigate={~p"/projects"} active={@active_nav == :projects} />
+        <.navlink
+          label="SDK connections"
+          navigate={~p"/sdk-connections"}
+          active={@active_nav == :sdk_connections}
+        />
+        <%= if @current_user.role in [:owner, :admin] do %>
+          <li class="font-semibold text-neutral-800">Admin</li>
+          <.navlink label="Users" navigate={~p"/users"} active={@active_nav == :users} />
+          <.navlink
+            label="Configuration"
+            navigate={~p"/configuration"}
+            active={@active_nav == :configuration}
+          />
+        <% end %>
+      </ul>
+    </div>
+
+    <div class="flex-1 px-8 py-4">
+      {@inner_content}
+    </div>
+  </div>
+</main>

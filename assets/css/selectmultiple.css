@@ -1,0 +1,8 @@
+
+.select-multiple .select-multiple-values {
+    display: none;
+}
+
+.select-multiple.open .select-multiple-values {
+    display: block;
+}

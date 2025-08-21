@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" class="[scrollbar-gutter:stable]">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content={get_csrf_token()} />
+    <.live_title suffix=" · SavvyFlags">
+      {assigns[:page_title] || "SavvyFlags"}
+    </.live_title>
+    <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
+    </script>
+    <link rel="icon" type="image/png" href={~p"/images/savvyflags-logo.png"} />
+    <meta name="robots" content="noindex" />
+  </head>
+  <body class="bg-gray-50 antialiased text-black">
+    <nav class="relative z-10 flex items-center py-4 ">
+      <div class="mx-5 flex items-center w-full">
+        <a href="/" class="font-bold flex">
+          <img src={~p"/images/savvyflags-logo.svg"} class="h-6 w-6 mr-1" /> SavvyFlags
+        </a>
+        <.code_label value={"v#{SavvyFlags.version()}" } class="ml-1" variant="black" />
+        <ul class="ml-auto flex gap-10">
+          <%= if @current_user do %>
+            <li class="text-[0.8125rem] leading-6 text-zinc-900">
+              {@current_user.email}
+            </li>
+            <li>
+              <.link
+                href={~p"/users/settings"}
+                class="cursor-pointer text-[0.8125rem] leading-6 text-zinc-900 font-semibold hover:text-zinc-700"
+              >
+                User settings
+              </.link>
+            </li>
+            <li>
+              <.link
+                href={~p"/users/log_out"}
+                method="delete"
+                class="cursor-pointer text-[0.8125rem] leading-6 text-zinc-900 font-semibold hover:text-zinc-700"
+              >
+                Log out
+              </.link>
+            </li>
+          <% else %>
+            <li>
+              <.link
+                href={~p"/users/log_in"}
+                class="text-[0.8125rem] leading-6 text-zinc-900 font-semibold hover:text-zinc-700"
+              >
+                Log in
+              </.link>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    </nav>
+    {@inner_content}
+  </body>
+</html>

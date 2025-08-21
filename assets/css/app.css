@@ -1,0 +1,12 @@
+@import 'tailwindcss' source(none);
+@import 'flatpickr/dist/flatpickr.css';
+@import './selectmultiple';
+
+@source "../css";
+@source "../js";
+@source "../../lib/savvy_flags_web";
+
+@plugin "../vendor/heroicons";
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* This file is for your main application CSS */
