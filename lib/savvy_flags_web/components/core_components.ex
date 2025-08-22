@@ -400,7 +400,7 @@ defmodule SavvyFlagsWeb.CoreComponents do
         id={@id}
         name={@name}
         class={[
-          "mt-2 block w-full rounded text-zinc-900 focus:ring-0 focus:outline-neutral-800 focus:outline-2 focus:outline-offset-1 sm:text-sm sm:leading-6 min-h-[6rem]",
+          "mt-2 block w-full rounded border px-2 text-zinc-900 focus:ring-0 focus:outline-neutral-800 focus:outline-2 focus:outline-offset-1 sm:text-sm sm:leading-6 min-h-[6rem]",
           @errors == [] && "border-zinc-300 focus:border-zinc-400",
           @errors != [] && "border-rose-400 focus:border-rose-400"
         ]}
