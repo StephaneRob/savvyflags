@@ -5,7 +5,7 @@ defmodule SavvyFlags.MixProject do
     [
       app: :savvy_flags,
       version: "1.0.0",
-      elixir: "~> 1.17",
+      elixir: "~> 1.18",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
@@ -20,7 +20,9 @@ defmodule SavvyFlags.MixProject do
         "coveralls.post": :test,
         "coveralls.html": :test,
         "coveralls.cobertura": :test
-      ]
+      ],
+      listeners: [Phoenix.CodeReloader],
+      compilers: [:phoenix_live_view] ++ Mix.compilers()
     ]
   end
 

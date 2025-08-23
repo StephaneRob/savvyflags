@@ -9,7 +9,6 @@ defmodule SavvyFlagsWeb.ProjectLive.FormComponent do
     <div>
       <.header>
         {@title}
-        <:subtitle>Use this form to create project</:subtitle>
       </.header>
 
       <.simple_form

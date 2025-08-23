@@ -9,7 +9,6 @@ defmodule SavvyFlagsWeb.AttributeLive.FormComponent do
     <div>
       <.header>
         {@title}
-        <:subtitle>Use this form to manage your attributes</:subtitle>
       </.header>
 
       <.simple_form

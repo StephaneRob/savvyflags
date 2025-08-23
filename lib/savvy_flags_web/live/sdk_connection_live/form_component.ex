@@ -8,7 +8,6 @@ defmodule SavvyFlagsWeb.SdkConnection.FormComponent do
     <div>
       <.header>
         {@title}
-        <:subtitle>Use this form to manage organization records in your database.</:subtitle>
       </.header>
 
       <.simple_form

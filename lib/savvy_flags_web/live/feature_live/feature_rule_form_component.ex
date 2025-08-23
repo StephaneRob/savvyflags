@@ -73,7 +73,6 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
                 delete
               </.button>
             </div>
-            <hr />
           </.inputs_for>
           <%= if @form[:feature_rule_conditions].value == [] do %>
             <p class="italic text-sm text-neutral-700">

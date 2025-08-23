@@ -9,7 +9,7 @@ defmodule SavvyFlagsWeb.FeatureLive.FormComponent do
     <div>
       <.header>
         {@title}
-        <:subtitle>Use this form to manage organization records in your database.</:subtitle>
+        <:subtitle>Start creating a new feature!</:subtitle>
       </.header>
 
       <.simple_form

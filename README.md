@@ -2,6 +2,8 @@ _This project is a POC to create a self hosted solution to manage feature flags 
 
 # SavvyFlags
 
+![Mepit CI](https://github.com/StephaneRob/savvyflags/actions/workflows/elixir.yml/badge.svg)
+
 Feature flag management application using Elixir / Phoenix.
 
 ![Savvyflags](./savvyflags-readme.png)
@@ -9,8 +11,8 @@ Feature flag management application using Elixir / Phoenix.
 ## Requirements
 
 - Postgresql > 14
-- Elixir 1.17
-- Erlang 27
+- Elixir 1.18
+- Erlang 28
 
 ## Features
 
