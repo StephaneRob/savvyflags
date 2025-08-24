@@ -132,11 +132,11 @@ defmodule SavvyFlagsWeb.FeatureLive.Components do
   def feature_environments(assigns) do
     ~H"""
     <.table
-      id="attributes"
+      id="feature-environments"
       rows={@environments}
       row_click={
         fn environment ->
-          JS.navigate(~p"/features/#{@feature}/environments/#{environment}")
+          JS.patch(~p"/features/#{@feature}/environments/#{environment}")
         end
       }
     >

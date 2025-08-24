@@ -238,9 +238,7 @@ defmodule SavvyFlagsWeb.FeatureLive.Show do
         {SavvyFlagsWeb.FeatureLive.FeatureRuleComponent, {:deleted, feature_rule}},
         socket
       ) do
-    socket =
-      socket
-      |> refresh()
+    socket = refresh(socket)
 
     socket =
       if feature_rule.id do
@@ -249,17 +247,14 @@ defmodule SavvyFlagsWeb.FeatureLive.Show do
         socket
       end
 
-    {:noreply, socket}
+    noreply(socket)
   end
 
   @impl true
   def handle_info({SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent, {:saved, _}}, socket) do
-    socket =
-      socket
-      |> refresh()
-      |> put_flash(:info, "Feature Rule correctly updated")
-
-    {:noreply, socket}
+    socket
+    |> refresh()
+    |> noreply()
   end
 
   defp refresh(socket) do

@@ -1,17 +1,23 @@
 defmodule SavvyFlagsWeb.SdkConnectionLive.IndexTest do
+  use SavvyFlagsWeb.ConnCase, async: true
   alias SavvyFlags.Projects
   alias SavvyFlags.Environments
   alias SavvyFlags.SdkConnections.SdkConnection
-  use SavvyFlagsWeb.ConnCase, async: true
+
   import Phoenix.LiveViewTest
+  import SavvyFlags.AccountsFixtures
   import SavvyFlags.SdkConnectionsFixtures
+  import SavvyFlags.ProjectsFixtures
+  import SavvyFlags.EnvironmentsFixtures
 
   describe "Index" do
     setup %{conn: conn} = ctx do
-      user = SavvyFlags.AccountsFixtures.user_fixture(%{role: :owner})
-      SavvyFlags.EnvironmentsFixtures.environment_fixture()
-      SavvyFlags.ProjectsFixtures.project_fixture()
+      user = user_fixture(%{role: :owner})
+      environment_fixture()
+      project_fixture()
+
       conn = if ctx[:sign_in], do: log_in_user(conn, user), else: conn
+
       projects = Projects.list_projects()
       environments = Environments.list_environments()
 
@@ -45,26 +51,26 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.IndexTest do
     test "lists all sdk connections for a given oranization", %{
       conn: conn
     } do
-      {:ok, _index_live, html} = live(conn, ~p"/sdk-connections")
+      {:ok, _lv, html} = live(conn, ~p"/sdk-connections")
       assert html =~ "Listing SDK connections"
     end
 
     @tag :sign_in
     test "saves new sdk connections", %{conn: conn, projects: projects} do
-      {:ok, index_live, _html} = live(conn, ~p"/sdk-connections")
+      {:ok, lv, _html} = live(conn, ~p"/sdk-connections")
 
-      assert index_live |> element("a", "New SDK connection") |> render_click() =~
+      assert lv |> element("a", "New SDK connection") |> render_click() =~
                "New SDK connection"
 
-      assert_patch(index_live, ~p"/sdk-connections/new")
+      assert_patch(lv, ~p"/sdk-connections/new")
 
-      assert index_live
+      assert lv
              |> form("#sdk-connection-form", sdk_connection: %{name: nil})
              |> render_change() =~ "can&#39;t be blank"
 
       assert length(SavvyFlags.Repo.all(SdkConnection)) == 1
 
-      assert index_live
+      assert lv
              |> form("#sdk-connection-form",
                sdk_connection: %{
                  name: "test",
@@ -76,9 +82,9 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.IndexTest do
 
       assert length(SavvyFlags.Repo.all(SdkConnection)) == 2
 
-      assert_patch(index_live, ~p"/sdk-connections")
+      assert_patch(lv, ~p"/sdk-connections")
 
-      html = render(index_live)
+      html = render(lv)
       assert html =~ "SDK connection created successfully"
     end
   end

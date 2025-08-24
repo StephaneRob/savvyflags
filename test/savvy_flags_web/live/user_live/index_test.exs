@@ -35,7 +35,7 @@ defmodule SavvyFlagsWeb.UserLive.IndexTest do
 
     @tag :sign_in
     test "logged in owner should get the list all users", %{conn: conn} do
-      {:ok, _index_live, html} = live(conn, ~p"/users")
+      {:ok, _lv, html} = live(conn, ~p"/users")
       assert html =~ "Listing users"
     end
 
@@ -43,14 +43,14 @@ defmodule SavvyFlagsWeb.UserLive.IndexTest do
     test "logged in owner should be able to invite a new user", %{
       conn: conn
     } do
-      {:ok, view, _} = live(conn, ~p"/users")
+      {:ok, lv, _} = live(conn, ~p"/users")
 
-      assert view |> element("a", "Invite user") |> render_click() =~
+      assert lv |> element("a", "Invite user") |> render_click() =~
                "New user"
 
-      assert_patch(view, ~p"/users/new")
+      assert_patch(lv, ~p"/users/new")
 
-      assert view
+      assert lv
              |> form("#user-form", user: %{email: ""})
              |> render_change() =~ "can&#39;t be blank"
     end

@@ -1,16 +1,22 @@
 defmodule SavvyFlagsWeb.SdkConnectionLive.ShowTest do
   use SavvyFlagsWeb.ConnCase, async: true
-  import Phoenix.LiveViewTest
-  import SavvyFlags.SdkConnectionsFixtures
   alias SavvyFlags.Projects
   alias SavvyFlags.Environments
 
+  import Phoenix.LiveViewTest
+  import SavvyFlags.AccountsFixtures
+  import SavvyFlags.SdkConnectionsFixtures
+  import SavvyFlags.ProjectsFixtures
+  import SavvyFlags.EnvironmentsFixtures
+
   describe "Show" do
     setup %{conn: conn} = ctx do
-      user = SavvyFlags.AccountsFixtures.user_fixture(%{role: :owner})
-      SavvyFlags.EnvironmentsFixtures.environment_fixture()
-      SavvyFlags.ProjectsFixtures.project_fixture()
+      user = user_fixture(%{role: :owner})
+      environment_fixture()
+      project_fixture()
+
       conn = if ctx[:sign_in], do: log_in_user(conn, user), else: conn
+
       projects = Projects.list_projects()
       environments = Environments.list_environments()
 
@@ -40,7 +46,7 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.ShowTest do
       sdk_connection: sdk_connection,
       conn: conn
     } do
-      {:ok, _index_live, html} =
+      {:ok, _lv, html} =
         live(conn, ~p"/sdk-connections/#{sdk_connection}")
 
       assert html =~ "#{sdk_connection.reference}"
@@ -53,11 +59,11 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.ShowTest do
       conn: conn,
       sdk_connection: sdk_connection
     } do
-      {:ok, index_live, _html} = live(conn, ~p"/sdk-connections/#{sdk_connection}")
-      assert index_live |> element("a", "Sandbox") |> render_click() =~ "Plain rules"
-      assert_patch(index_live, ~p"/sdk-connections/#{sdk_connection}/sandbox")
-      assert index_live |> element("a", "Metrics") |> render_click() =~ "30 days API usage"
-      assert_patch(index_live, ~p"/sdk-connections/#{sdk_connection}/metrics")
+      {:ok, lv, _html} = live(conn, ~p"/sdk-connections/#{sdk_connection}")
+      assert lv |> element("a", "Sandbox") |> render_click() =~ "Plain rules"
+      assert_patch(lv, ~p"/sdk-connections/#{sdk_connection}/sandbox")
+      assert lv |> element("a", "Metrics") |> render_click() =~ "30 days API usage"
+      assert_patch(lv, ~p"/sdk-connections/#{sdk_connection}/metrics")
     end
   end
 end

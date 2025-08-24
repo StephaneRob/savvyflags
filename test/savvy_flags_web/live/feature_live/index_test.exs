@@ -36,17 +36,17 @@ defmodule SavvyFlagsWeb.FeatureLive.IndexTest do
       feature: feature,
       project: project
     } do
-      {:ok, live, html} = live(conn, ~p"/features")
+      {:ok, lv, html} = live(conn, ~p"/features")
       assert html =~ "Features"
       assert html =~ feature.key
 
-      assert live
+      assert lv
              |> form("#features_search",
                filter: %{project_id: project.id, value_type: :boolean}
              )
              |> render_change() =~ feature.key
 
-      refute live
+      refute lv
              |> form("#features_search",
                filter: %{project_id: project.id, value_type: :string}
              )
@@ -57,24 +57,24 @@ defmodule SavvyFlagsWeb.FeatureLive.IndexTest do
     test "Create a new feature", %{
       conn: conn
     } do
-      {:ok, index_live, _html} = live(conn, ~p"/features")
+      {:ok, lv, _html} = live(conn, ~p"/features")
 
-      assert index_live |> element("a", "New feature") |> render_click() =~
+      assert lv |> element("a", "New feature") |> render_click() =~
                "New feature"
 
-      assert_patch(index_live, ~p"/features/new")
+      assert_patch(lv, ~p"/features/new")
 
-      assert index_live
+      assert lv
              |> form("#feature-form", feature: %{key: nil})
              |> render_change() =~ "can&#39;t be blank"
 
-      assert index_live
+      assert lv
              |> form("#feature-form",
                feature: %{key: "test:1", default_value: %{type: "string", value: "green"}}
              )
              |> render_submit()
 
-      {path, _flash} = assert_redirect(index_live)
+      {path, _flash} = assert_redirect(lv)
       assert path =~ ~r/\/features\/f_\w+/
     end
   end

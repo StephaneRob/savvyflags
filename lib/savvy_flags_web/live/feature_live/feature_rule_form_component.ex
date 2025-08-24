@@ -20,7 +20,13 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
         </:subtitle>
       </.header>
 
-      <.simple_form for={@form} phx-submit="save" phx-target={@myself} phx-change="validate">
+      <.simple_form
+        for={@form}
+        phx-submit="save"
+        phx-target={@myself}
+        phx-change="validate"
+        id="feature-rule-form"
+      >
         <.input
           field={@form[:description]}
           label="Description *"
@@ -300,6 +306,7 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
         send(self(), {__MODULE__, {:saved, feature_rule}})
 
         socket
+        |> put_flash(:info, "Feature rule created successfully")
         |> push_patch(to: socket.assigns.patch)
         |> noreply()
 

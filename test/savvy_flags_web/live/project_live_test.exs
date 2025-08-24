@@ -26,30 +26,30 @@ defmodule SavvyFlagsWeb.ProjectLiveTest do
 
     @tag :sign_in
     test "logged in user should get the list all projects", %{conn: conn} do
-      {:ok, _index_live, html} = live(conn, ~p"/projects")
+      {:ok, _lv, html} = live(conn, ~p"/projects")
       assert html =~ "Listing project"
     end
 
     @tag :sign_in
     test "logged in user should be able to create a new project", %{conn: conn} do
-      {:ok, index_live, _html} = live(conn, ~p"/projects")
+      {:ok, lv, _html} = live(conn, ~p"/projects")
 
-      assert index_live |> element("a", "New project") |> render_click() =~
+      assert lv |> element("a", "New project") |> render_click() =~
                "New project"
 
-      assert_patch(index_live, ~p"/projects/new")
+      assert_patch(lv, ~p"/projects/new")
 
-      assert index_live
+      assert lv
              |> form("#project-form", project: %{name: nil})
              |> render_change() =~ "can&#39;t be blank"
 
-      assert index_live
+      assert lv
              |> form("#project-form", project: %{name: "test"})
              |> render_submit()
 
-      assert_patch(index_live, ~p"/projects")
+      assert_patch(lv, ~p"/projects")
 
-      html = render(index_live)
+      html = render(lv)
       assert html =~ "Project created successfully"
     end
 
@@ -58,26 +58,26 @@ defmodule SavvyFlagsWeb.ProjectLiveTest do
       conn: conn,
       project: project
     } do
-      {:ok, index_live, _html} = live(conn, ~p"/projects")
+      {:ok, lv, _html} = live(conn, ~p"/projects")
 
-      assert index_live
+      assert lv
              |> element("##{project.reference} a", "Edit")
              |> render_click() =~
                "Edit project"
 
-      assert_patch(index_live, ~p"/projects/#{project.reference}/edit")
+      assert_patch(lv, ~p"/projects/#{project.reference}/edit")
 
-      assert index_live
+      assert lv
              |> form("#project-form", project: %{name: nil})
              |> render_change() =~ "can&#39;t be blank"
 
-      assert index_live
+      assert lv
              |> form("#project-form", project: %{name: "project"})
              |> render_submit()
 
-      assert_patch(index_live, ~p"/projects")
+      assert_patch(lv, ~p"/projects")
 
-      html = render(index_live)
+      html = render(lv)
       assert html =~ "Project updated successfully"
     end
   end
