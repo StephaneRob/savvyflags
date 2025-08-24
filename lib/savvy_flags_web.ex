@@ -88,7 +88,7 @@ defmodule SavvyFlagsWeb do
       # HTML escaping functionality
       import Phoenix.HTML
       # Core UI components and translation
-      import SavvyFlagsWeb.CoreComponents
+      use SavvyFlagsWeb.UI
       use Gettext, backend: SavvyFlagsWeb.Gettext
 
       # Shortcut for generating JS commands

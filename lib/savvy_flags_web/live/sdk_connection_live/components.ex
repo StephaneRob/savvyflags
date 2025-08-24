@@ -44,7 +44,7 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Components do
     |> Sparkline.new()
     |> Map.put(:height, 80)
     |> Map.put(:width, 700)
-    |> Sparkline.colours("#e0e7ff", "#4338ca")
+    |> Sparkline.colours("#EEE", "#000")
     |> Sparkline.draw()
   end
 
