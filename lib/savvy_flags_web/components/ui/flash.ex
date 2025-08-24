@@ -33,7 +33,7 @@ defmodule SavvyFlagsWeb.UI.Flash do
       role="alert"
       class={[
         "fixed bottom-2 right-2 mr-2 w-80 sm:w-96 z-50 rounded-lg shadow p-3 ring-1",
-        @kind == :info && "bg-green-100 text-green-800 ring-green-100 fill-cyan-900",
+        @kind == :info && "bg-emerald-200 text-emerald-800 ring-emerald-300 fill-cyan-900",
         @kind == :error && "bg-red-100 text-red-900 ring-red-100 fill-red-900"
       ]}
       {@rest}

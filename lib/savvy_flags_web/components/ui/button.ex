@@ -24,8 +24,8 @@ defmodule SavvyFlagsWeb.UI.Button do
       type={@type}
       class={
         Tails.classes([
-          "phx-submit-loading:opacity-75 rounded",
-          "rounded-full px-4 text-sm py-2 cursor-pointer",
+          "phx-submit-loading:opacity-75",
+          "rounded-lg px-4 text-sm py-2 cursor-pointer",
           variant(@variant),
           size(@size),
           @class
@@ -48,7 +48,7 @@ defmodule SavvyFlagsWeb.UI.Button do
   defp variant(variant) do
     case variant do
       "primary" ->
-        "bg-neutral-900 border border-black text-white hover:bg-black"
+        "bg-emerald-300 border border-emerald-400 font-semibold hover:bg-emerald-400"
 
       "secondary" ->
         "bg-white border text-black hover:bg-neutral-100"

@@ -11,7 +11,7 @@ defmodule SavvyFlagsWeb.UI.Breadcrumb do
     assigns = %{assigns | items: Enum.with_index(assigns.items)}
 
     ~H"""
-    <div class="mb-10">
+    <div class="mb-5">
       <div class={["flex justify-between items-center h-10", @class]}>
         <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
           <li :for={{item, idx} <- @items} class="inline-flex items-center">

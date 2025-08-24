@@ -13,7 +13,7 @@
     <link rel="icon" type="image/png" href={~p"/images/savvyflags-logo.png"} />
     <meta name="robots" content="noindex" />
   </head>
-  <body class="bg-gray-50 antialiased text-black">
+  <body class="bg-gray-50 antialiased text-black  min-h-screen flex flex-col overflow-scroll">
     <nav class="relative z-10 flex items-center py-4 ">
       <div class="mx-5 flex items-center w-full">
         <a href="/" class="font-bold flex">
@@ -54,7 +54,7 @@
             </li>
           <% end %>
           <li>
-            <.link href="https://github.com/StephaneRob/savvyflags">
+            <.link href="https://github.com/StephaneRob/savvyflags" target="_blank">
               <svg viewBox="0 0 24 24" aria-hidden="true" class="size-6 fill-slate-900">
                 <path
                   fill-rule="evenodd"
@@ -69,5 +69,18 @@
       </div>
     </nav>
     {@inner_content}
+
+    <footer class="py-2 mb-2 text-center text-xs text-gray-400 mt-auto">
+      <p>
+        Made with <.icon name="hero-heart-solid" class="inline-block h-4 w-4" /> by
+        <a
+          href="https://github.com/StephaneRob"
+          target="_blank"
+          class="underline hover:text-gray-700"
+        >
+          Stéphane Robino
+        </a>
+      </p>
+    </footer>
   </body>
 </html>

@@ -36,7 +36,7 @@ defmodule SavvyFlagsWeb.UI.Table do
 
     ~H"""
     <div class="overflow-y-auto px-4 sm:overflow-visible sm:px-0">
-      <table class={["w-[40rem] mt-11 sm:w-full rounded overflow-hidden", @class]}>
+      <table class={["w-[40rem] sm:w-full rounded overflow-hidden", @class]}>
         <thead class="text-sm text-left leading-6 text-zinc-500 border-b border-zinc-200">
           <tr class="">
             <th :for={col <- @col} class="px-5 py-3 font-semibold text-black">{col[:label]}</th>

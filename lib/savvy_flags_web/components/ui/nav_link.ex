@@ -7,12 +7,12 @@ defmodule SavvyFlagsWeb.UI.NavLink do
   def navlink(assigns) do
     ~H"""
     <li class={[
-      "py-1 rounded hover:bg-neutral-100 hover:text-neutral-700 cursor-pointer relative",
+      "rounded hover:bg-emerald-100 hover:text-neutral-700 cursor-pointer relative",
       if(@active,
-        do: "bg-neutral-100 text-neutral-700 font-bold"
+        do: "bg-emerald-100 text-emerald-800 font-bold"
       )
     ]}>
-      <.link navigate={@navigate} class="px-5 inline-block w-full">
+      <.link navigate={@navigate} class="px-2 py-1  inline-block w-full">
         {@label}
       </.link>
     </li>
