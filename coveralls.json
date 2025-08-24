@@ -1,7 +1,6 @@
 {
   "skip_files": [
     "test/support",
-    "lib/savvy_flags_web/live",
     "lib/savvy_flags_web/components",
     "lib/savvy_flags/release.ex",
     "lib/savvy_flags_web/router",

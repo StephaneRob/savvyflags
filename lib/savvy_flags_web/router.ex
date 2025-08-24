@@ -1,11 +1,12 @@
 defmodule SavvyFlagsWeb.Router do
+  use SavvyFlagsWeb, :router
+
   require SavvyFlagsWeb.Router.Features
   require SavvyFlagsWeb.Router.SdkConnections
   require SavvyFlagsWeb.Router.Attributes
   require SavvyFlagsWeb.Router.Users
   require SavvyFlagsWeb.Router.Environments
   require SavvyFlagsWeb.Router.Projects
-  use SavvyFlagsWeb, :router
 
   import SavvyFlagsWeb.UserAuth
 

@@ -50,6 +50,9 @@ defmodule SavvyFlagsWeb.UI.Button do
       "primary" ->
         "bg-emerald-300 border border-emerald-400 font-semibold hover:bg-emerald-400"
 
+      "ghost" ->
+        "bg-transparent font-semibold bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+
       "secondary" ->
         "bg-white border text-black hover:bg-neutral-100"
 

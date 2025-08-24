@@ -37,7 +37,7 @@ defmodule SavvyFlags.Features.FeatureEvaluatorTest do
 
       Features.create_feature_rule(%{
         feature_id: feature.id,
-        description: "Activate for wttj users",
+        description: "Activate for example users",
         value: %{type: :boolean, value: "true"},
         environment_id: List.first(environments).id,
         feature_rule_conditions: [
@@ -45,7 +45,7 @@ defmodule SavvyFlags.Features.FeatureEvaluatorTest do
             position: 1,
             attribute_id: email_attribute.id,
             type: :match_regex,
-            value: ".*\.wttj.co$"
+            value: ".*\.example.co$"
           }
         ]
       })
@@ -64,26 +64,26 @@ defmodule SavvyFlags.Features.FeatureEvaluatorTest do
 
   describe "compare/2" do
     test "with :match_regex" do
-      assert FeatureEvaluator.compare("stephane@wttj.co", ".*wttj\.co$", :match_regex)
-      refute FeatureEvaluator.compare("stephane@gmail.co", ".*wttj\.co$", :match_regex)
+      assert FeatureEvaluator.compare("stephane@example.co", ".*example\.co$", :match_regex)
+      refute FeatureEvaluator.compare("stephane@gmail.co", ".*example\.co$", :match_regex)
       assert FeatureEvaluator.compare("stephane@gmail.co", "^stephane.*", :match_regex)
       refute FeatureEvaluator.compare("robert@gmail.co", "^stephane.*", :match_regex)
     end
 
     test "with :not_match_regex" do
-      refute FeatureEvaluator.compare("stephane@wttj.co", ".*wttj\.co$", :not_match_regex)
-      assert FeatureEvaluator.compare("stephane@gmail.co", ".*wttj\.co$", :not_match_regex)
+      refute FeatureEvaluator.compare("stephane@example.co", ".*example\.co$", :not_match_regex)
+      assert FeatureEvaluator.compare("stephane@gmail.co", ".*example\.co$", :not_match_regex)
       refute FeatureEvaluator.compare("stephane@gmail.co", "^stephane.*", :not_match_regex)
       assert FeatureEvaluator.compare("robert@gmail.co", "^stephane.*", :not_match_regex)
     end
 
     test "with :equal" do
-      assert FeatureEvaluator.compare("stephane@wttj.co", "stephane@wttj.co", :equal)
+      assert FeatureEvaluator.compare("stephane@example.co", "stephane@example.co", :equal)
       refute FeatureEvaluator.compare("stephane@gmail.co", "whatever", :equal)
     end
 
     test "with :not_equal" do
-      refute FeatureEvaluator.compare("stephane@wttj.co", "stephane@wttj.co", :not_equal)
+      refute FeatureEvaluator.compare("stephane@example.co", "stephane@example.co", :not_equal)
       assert FeatureEvaluator.compare("stephane@gmail.co", "whatever", :not_equal)
     end
 

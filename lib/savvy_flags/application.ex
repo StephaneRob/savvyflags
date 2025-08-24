@@ -29,7 +29,6 @@ defmodule SavvyFlags.Application do
         SavvyFlags.Repo,
         {DNSCluster, query: Application.get_env(:savvy_flags, :dns_cluster_query) || :ignore},
         {Phoenix.PubSub, name: SavvyFlags.PubSub},
-        {Finch, name: SavvyFlags.Finch},
         {Cachex, name: SavvyFlags.FeatureCache},
         SavvyFlagsWeb.Endpoint
       ] ++ @other_children

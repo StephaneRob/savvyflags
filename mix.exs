@@ -60,7 +60,7 @@ defmodule SavvyFlags.MixProject do
       {:tailwind, "~> 0.3.0", runtime: Mix.env() == :dev},
       {:tails, "~> 0.1.11"},
       {:swoosh, "~> 1.3"},
-      {:finch, "~> 0.13"},
+      {:req, "~> 0.5"},
       {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 0.20"},

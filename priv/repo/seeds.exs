@@ -64,7 +64,7 @@ if System.get_env("SEED") do
   {:ok, _} =
     Features.create_feature_rule(%{
       feature_id: feature2.id,
-      description: "Activate for wttj users",
+      description: "Activate for example users",
       value: %{type: :string, value: "green"},
       environment_id: List.first(environments).id,
       feature_rule_conditions: [

@@ -3,10 +3,9 @@ defmodule SavvyFlags.AttributeClient do
 
   def request(url, access_token, value) do
     url = url <> "?q=#{value}"
-    req = Finch.build(:get, url, headers(access_token))
 
-    case Finch.request(req, SavvyFlags.Finch) do
-      {:ok, %Finch.Response{body: body}} -> Jason.decode!(body)
+    case Req.get(url, headers: headers(access_token)) do
+      {:ok, %Req.Response{body: body}} -> body
       {_, error} -> error
     end
   end

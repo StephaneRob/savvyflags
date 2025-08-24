@@ -2,6 +2,7 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
   use SavvyFlagsWeb, :live_component
 
   alias SavvyFlags.Attributes
+  alias SavvyFlags.Attributes.Attribute
   alias SavvyFlags.Features
   alias SavvyFlags.Features.FeatureRuleCondition
 
@@ -75,17 +76,22 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
             </div>
           </.inputs_for>
           <%= if @form[:feature_rule_conditions].value == [] do %>
-            <p class="italic text-sm text-neutral-700">
-              No conditions yet. <br />
-              <span class="text-orange-700">
-                <.icon name="hero-exclamation-triangle" class="mr-1 h-3 w-3" />
-                If no conditions provided the rule will always match and return de forced value.
-              </span>
+            <p class="text-xs text-neutral-500">
+              No conditions created yet.
+              <.icon name="hero-exclamation-triangle-solid" class="h-3 w-3" />
+              If no conditions provided the rule will always match and return de forced value.
             </p>
           <% end %>
           <div>
-            <.button class="mt-2" type="button" phx-click="add-line" phx-target={@myself} size="sm">
-              Add condition
+            <.button
+              class="mt-2"
+              type="button"
+              phx-click="add-line"
+              phx-target={@myself}
+              size="sm"
+              variant="ghost"
+            >
+              <.icon name="hero-plus" class="mr-1 h-4 w-4" /> Add condition
             </.button>
           </div>
         </fieldset>
@@ -98,13 +104,15 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
             id={"frv_type_#{@feature_rule.reference}"}
           />
           <%= if @feature.default_value.type == :boolean do %>
-            <.label>Forced value</.label>
-            <.input
-              field={fr_value[:value]}
-              label="Active?"
-              type="checkbox"
-              id={"frv_value_#{@feature_rule.reference}"}
-            />
+            <div>
+              <.label>Forced value</.label>
+              <.input
+                field={fr_value[:value]}
+                label="Active?"
+                type="checkbox"
+                id={"frv_value_#{@feature_rule.reference}"}
+              />
+            </div>
           <% else %>
             <.input
               field={fr_value[:value]}
@@ -135,7 +143,7 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
         <:actions>
           <.button phx-disable-with="Saving...">Save rule</.button>
           <.button
-            phx-click="cancel-edit-feature-rule"
+            phx-click="cancel"
             phx-target={@myself}
             type="button"
             variant="outline"
@@ -253,26 +261,9 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
     {:noreply, socket}
   end
 
-  def handle_event("cancel-edit-feature-rule", _, socket) do
-    %{feature_rule: feature_rule, environment: environment, feature: feature} = socket.assigns
-
-    socket =
-      if feature_rule.id do
-        changeset =
-          Features.change_feature_rule(feature_rule, %{
-            "feature_id" => feature.id,
-            "environment_id" => environment.id
-          })
-
-        socket
-        |> assign(:edit_mode, false)
-        |> assign_form(changeset)
-      else
-        send(self(), {__MODULE__, {:deleted, feature_rule}})
-        socket
-      end
-
+  def handle_event("cancel", _, socket) do
     socket
+    |> push_patch(to: socket.assigns.patch)
     |> noreply()
   end
 
@@ -317,30 +308,29 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
     end
   end
 
-  def value_input(%{condition_type: condition_type} = assigns)
-      when condition_type in [:sample, "sample"] do
-    ~H"""
-    <div class="flex items-center mt-1">
-      <.input field={@field} type="range" min="0" max="100" />
-      <div class="ml-3 mt-2">
-        <.label>{@field.value}</.label>
-      </div>
-    </div>
-    """
+  defp value_input(%{attribute_id: attribute_id} = assigns) do
+    assigns =
+      Map.merge(assigns, %{
+        attribute: Attributes.get_attribute!(attribute_id)
+      })
+
+    do_value_input(assigns)
   end
 
-  def value_input(%{attribute_id: attribute_id, condition_type: condition_type} = assigns)
-      when condition_type in [:in, "in", :not_in, "not_in"] do
-    attribute = Attributes.get_attribute!(attribute_id)
-    multiple = assigns.condition_type in [:in, "in", :not_in, "not_in"]
+  defp do_value_input(
+         %{
+           attribute: %Attribute{remote: true} = attribute,
+           condition_type: condition_type
+         } = assigns
+       )
+       when condition_type not in [:sample] do
+    multiple = condition_type in [:in, "in", :not_in, "not_in"]
 
     onchange = fn value ->
-      if attribute.remote do
-        SavvyFlags.AttributeClient.request(
-          attribute,
-          value
-        )
-      end
+      SavvyFlags.AttributeClient.request(
+        attribute,
+        value
+      )
     end
 
     assigns = Map.merge(assigns, %{onchange: onchange, multiple: multiple})
@@ -356,7 +346,19 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
     """
   end
 
-  def value_input(assigns) do
+  defp do_value_input(%{condition_type: condition_type} = assigns)
+       when condition_type in [:sample, "sample"] do
+    ~H"""
+    <div class="flex items-center mt-1">
+      <.input field={@field} type="range" min="0" max="100" />
+      <div class="ml-3 mt-2">
+        <.label>{@field.value}</.label>
+      </div>
+    </div>
+    """
+  end
+
+  defp do_value_input(assigns) do
     ~H"""
     <.input field={@field} type="text" />
     """
