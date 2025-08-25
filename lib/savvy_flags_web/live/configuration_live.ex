@@ -15,19 +15,29 @@ defmodule SavvyFlagsWeb.ConfigurationLive do
       </:subtitle>
     </.breadcrumb>
 
-    <.simple_form for={@form} id="configuration-form" phx-change="validate" phx-submit="save">
-      <h2 class="text-xl font-semibold">Security</h2>
-      <.toggle
-        label="Enforce MFA for your users"
-        checked={@form[:mfa_required].value}
-        id={@form[:mfa_required].id}
-        name={@form[:mfa_required].name}
-      />
+    <div class="max-w-96">
+      <.simple_form for={@form} id="configuration-form" phx-change="validate" phx-submit="save">
+        <h2 class="text-xl font-semibold">General</h2>
+        <div>
+          <.input field={@form[:feature_key_format]} label="Feature key format" />
+          <p class=" text-xs text-gray-500">
+            Specify the format for feature keys, using placeholders for dynamic values. ex:
+            <code>&lt;app&gt;:&lt;feature&gt;-YYYY-MM-DD</code>
+          </p>
+        </div>
+        <h2 class="text-xl font-semibold">Security</h2>
+        <.toggle
+          label="Enforce MFA for your users"
+          checked={@form[:mfa_required].value}
+          id={@form[:mfa_required].id}
+          name={@form[:mfa_required].name}
+        />
 
-      <:actions>
-        <.button phx-disable-with="Saving...">Save settings</.button>
-      </:actions>
-    </.simple_form>
+        <:actions>
+          <.button phx-disable-with="Saving...">Save settings</.button>
+        </:actions>
+      </.simple_form>
+    </div>
     """
   end
 

@@ -15,6 +15,8 @@ defmodule SavvyFlags.Features.FormatValidator do
     end)
   end
 
+  def validate(nil, _), do: {:ok, %{}}
+
   def validate(string, format) do
     regex = build_regex(format)
 

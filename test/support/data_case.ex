@@ -29,6 +29,7 @@ defmodule SavvyFlags.DataCase do
 
   setup tags do
     SavvyFlags.DataCase.setup_sandbox(tags)
+    SavvyFlags.Configurations.init()
     :ok
   end
 

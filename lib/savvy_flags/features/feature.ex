@@ -3,6 +3,7 @@ defmodule SavvyFlags.Features.Feature do
   import SavvyFlags.Fields
   import Ecto.Changeset
   alias SavvyFlags.Features.FeatureValue
+  alias SavvyFlags.Features.FormatValidator
 
   @derive {Phoenix.Param, key: :reference}
   schema "features" do
@@ -21,8 +22,8 @@ defmodule SavvyFlags.Features.Feature do
   end
 
   @doc false
-  def changeset(attribute, attrs) do
-    attribute
+  def changeset(feature, attrs) do
+    feature
     |> cast(attrs, [
       :key,
       :description,
@@ -32,10 +33,29 @@ defmodule SavvyFlags.Features.Feature do
     ])
     |> cast_embed(:default_value, with: &FeatureValue.changeset/2)
     |> validate_length(:description, max: 150)
+    |> validate_key_format()
     |> validate_required([:key, :project_id])
   end
 
   def value_types do
     [String: "string", Boolean: "boolean", Number: "number", Json: "json"]
+  end
+
+  defp validate_key_format(changeset) do
+    # TODO: stop loading configuration on every validation
+    configuration = SavvyFlags.Configurations.get_configuration()
+
+    if configuration.feature_key_format in [nil, ""] do
+      changeset
+    else
+      do_validate_key_format(changeset, configuration.feature_key_format)
+    end
+  end
+
+  defp do_validate_key_format(changeset, format) do
+    case FormatValidator.validate(get_field(changeset, :key), format) do
+      {:ok, _} -> changeset
+      {:error, _} -> add_error(changeset, :key, "Key must match the format: #{format}")
+    end
   end
 end

@@ -5,7 +5,7 @@ defmodule SavvyFlags.ConfigurationTest do
     test "must create a configuration with default values" do
       assert {:ok, configuration} = SavvyFlags.Configurations.init()
       refute configuration.mfa_required
-      assert configuration.feature_custom_format == nil
+      assert configuration.feature_key_format == nil
     end
   end
 

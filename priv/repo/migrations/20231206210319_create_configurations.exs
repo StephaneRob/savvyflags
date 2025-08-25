@@ -4,7 +4,7 @@ defmodule SavvyFlags.Repo.Migrations.CreateConfigurations do
   def change do
     create table(:configurations) do
       add :mfa_required, :boolean, default: false
-      add :feature_custom_format, :string
+      add :feature_key_format, :string
 
       timestamps(type: :utc_datetime)
     end
