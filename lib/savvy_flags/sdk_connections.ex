@@ -1,5 +1,6 @@
 defmodule SavvyFlags.SdkConnections do
   import Ecto.Query, warn: false
+  import SavvyFlags.Utils, only: [get_value: 3]
 
   alias SavvyFlags.Repo
   alias SavvyFlags.Projects
@@ -44,7 +45,7 @@ defmodule SavvyFlags.SdkConnections do
 
   def update_sdk_connection(sdk_connection, attrs) do
     projects =
-      get_by_atom_or_string(attrs, :project_ids, [])
+      get_value(attrs, :project_ids, [])
       |> Enum.map(&Projects.get_project!(&1))
 
     sdk_connection
@@ -55,7 +56,7 @@ defmodule SavvyFlags.SdkConnections do
 
   def create_sdk_connection(attrs) do
     projects =
-      get_by_atom_or_string(attrs, :project_ids, [])
+      get_value(attrs, :project_ids, [])
       |> Enum.map(&Projects.get_project!(&1))
 
     %SdkConnection{}
@@ -68,13 +69,9 @@ defmodule SavvyFlags.SdkConnections do
     Repo.delete(sdk_connection)
   end
 
-  def get_by_atom_or_string(map, attr, default \\ nil) do
-    Map.get(map, attr, Map.get(map, "#{attr}", default))
-  end
-
   def change_sdk_connection(%SdkConnection{} = sdk_connection, attrs \\ %{}) do
     # projects =
-    # get_by_atom_or_string(attrs, :project_ids, [])
+    # get_value(attrs, :project_ids, [])
     # |> Enum.map(&get_project!(&1))
 
     SdkConnection.changeset(sdk_connection, attrs)

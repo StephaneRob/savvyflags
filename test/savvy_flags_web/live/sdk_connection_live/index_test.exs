@@ -59,7 +59,7 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.IndexTest do
     test "saves new sdk connections", %{conn: conn, projects: projects} do
       {:ok, lv, _html} = live(conn, ~p"/sdk-connections")
 
-      assert lv |> element("a", "New SDK connection") |> render_click() =~
+      assert lv |> element("a", "Create a new SDK connection") |> render_click() =~
                "New SDK connection"
 
       assert_patch(lv, ~p"/sdk-connections/new")

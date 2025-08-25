@@ -13,7 +13,7 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Index do
       <:items>SDK connections</:items>
       <:actions>
         <.link patch={~p"/sdk-connections/new"}>
-          <.button>New SDK connection</.button>
+          <.button>Create a new SDK connection</.button>
         </.link>
       </:actions>
       <:subtitle>
@@ -31,7 +31,7 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Index do
       }
     >
       <:col :let={{_, sdk_connection}} label="Identifier">
-        <.code_label value={sdk_connection.reference} />
+        <.badge value={sdk_connection.reference} />
       </:col>
       <:col :let={{_, sdk_connection}} label="Mode">
         {SavvyFlags.SdkConnections.SdkConnection.mode(sdk_connection.mode)}

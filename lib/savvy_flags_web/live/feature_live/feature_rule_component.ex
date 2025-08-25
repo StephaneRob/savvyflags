@@ -25,8 +25,8 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleComponent do
       </div>
 
       <p class="mb-3">
-        <span class="text-neutral-500 text-sm">#{@feature_rule.position + 1}</span>
         <span class="font-semibold">{@feature_rule.description}</span>
+        <span class="text-neutral-500 text-xs">#{@feature_rule.position + 1}</span>
       </p>
       <p class="mb-2 text-sm">
         <span class="font-semibold">Conditions</span>
@@ -42,30 +42,28 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleComponent do
           :for={condition <- @feature_rule.feature_rule_conditions}
           class="mb-4 first:before:content-['IF'] not-first:before:content-['AND'] before:font-light before:italic before:mr-2 ml-3 first:ml-7 text-sm"
         >
-          <.code_label value={condition.attribute.name} variant="black" />
+          <.badge value={condition.attribute.name} />
           <span class="mx-3 font-semibold">
             {Keyword.get(SavvyFlags.Features.FeatureRuleCondition.mapping(), condition.type)}
           </span>
           <span :if={condition.type == :sample} class="inline-block mb-1">
-            <.code_label value={condition.value} class="mr-1 mb-2" variant="green" border={false} />%
+            <.badge value={condition.value} class="mr-1 mb-2" />%
           </span>
           <span
             :for={v <- String.split(condition.value, ",")}
             :if={condition.type in [:in, :not_in]}
             class="inline-block mb-1"
           >
-            <.code_label value={v} class="mr-1 mb-2" variant="green" border={false} />
+            <.badge value={v} class="mr-1 mb-2" />
           </span>
-          <.code_label
+          <.badge
             :if={condition.type not in [:in, :not_in, :sample]}
             value={condition.value}
-            variant="green"
-            border={false}
           />
         </div>
       </div>
       <p class="font-semibold mb-2 text-sm">
-        Forced value <.code_label value={@feature_rule.value.value} variant="black" />
+        Forced value <.badge value={@feature_rule.value.value} />
       </p>
     </div>
     """

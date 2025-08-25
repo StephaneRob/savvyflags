@@ -26,8 +26,8 @@ defmodule SavvyFlagsWeb.UserLive.Index do
 
     <.table id="members" rows={@streams.users}>
       <:col :let={{_, user}} label="Email">
-        <code class="font-normal">{user.email}</code>
-        <.code_label :if={user.id == @current_user.id} variant="black" value="me" />
+        {user.email}
+        <.badge :if={user.id == @current_user.id} value="me" />
       </:col>
       <:col :let={{_, user}} label="Full access">
         <span :if={

@@ -4,18 +4,15 @@ defmodule SavvyFlags.Accounts do
   """
 
   import Ecto.Query, warn: false
-  alias SavvyFlags.Repo
+  import SavvyFlags.Utils, only: [get_value: 3]
 
+  alias SavvyFlags.Repo
   alias SavvyFlags.Accounts
   alias SavvyFlags.Accounts.{User, UserToken, UserNotifier}
 
   def invite_user(attrs) do
     attrs = Map.put(attrs, "password", Accounts.generate_password())
     register_user(attrs)
-  end
-
-  def get_by_atom_or_string(map, attr, default \\ nil) do
-    Map.get(map, attr, Map.get(map, "#{attr}", default))
   end
 
   def preload_user(user, preloads) do
@@ -26,15 +23,15 @@ defmodule SavvyFlags.Accounts do
     user = Repo.preload(user, [:projects, :features, :environments])
 
     projects =
-      get_by_atom_or_string(attrs, :project_ids, [])
+      get_value(attrs, :project_ids, [])
       |> Enum.map(&SavvyFlags.Projects.get_project!(&1))
 
     features =
-      get_by_atom_or_string(attrs, :feature_ids, [])
+      get_value(attrs, :feature_ids, [])
       |> Enum.map(&SavvyFlags.Features.get_feature!/1)
 
     environments =
-      get_by_atom_or_string(attrs, :environment_ids, [])
+      get_value(attrs, :environment_ids, [])
       |> Enum.map(&SavvyFlags.Environments.get_environment_by_id!/1)
 
     user

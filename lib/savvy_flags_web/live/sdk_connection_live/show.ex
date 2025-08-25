@@ -14,7 +14,7 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Show do
       <:items>
         <.link navigate={~p"/sdk-connections"}>SDK connections</.link>
       </:items>
-      <:items><.code_label value={@sdk_connection.reference} /></:items>
+      <:items><.badge value={@sdk_connection.reference} /></:items>
     </.breadcrumb>
 
     <div class="-mt-10">

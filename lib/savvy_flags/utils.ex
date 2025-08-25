@@ -9,4 +9,12 @@ defmodule SavvyFlags.Utils do
       })
     )
   end
+
+  def get_value(map, attr, default \\ nil) do
+    if Map.has_key?(map, attr) do
+      Map.get(map, attr, default)
+    else
+      Map.get(map, "#{attr}", default)
+    end
+  end
 end

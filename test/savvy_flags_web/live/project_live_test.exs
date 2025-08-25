@@ -34,7 +34,7 @@ defmodule SavvyFlagsWeb.ProjectLiveTest do
     test "logged in user should be able to create a new project", %{conn: conn} do
       {:ok, lv, _html} = live(conn, ~p"/projects")
 
-      assert lv |> element("a", "New project") |> render_click() =~
+      assert lv |> element("a", "Add project") |> render_click() =~
                "New project"
 
       assert_patch(lv, ~p"/projects/new")

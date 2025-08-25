@@ -37,8 +37,8 @@ defmodule SavvyFlagsWeb.EnvironmentLiveTest do
     test "logged in user should be able to create a new environment", %{conn: conn} do
       {:ok, lv, _html} = live(conn, ~p"/environments")
 
-      assert lv |> element("a", "New Environment") |> render_click() =~
-               "New Environment"
+      assert lv |> element("a", "Add environment") |> render_click() =~
+               "Add environment"
 
       assert_patch(lv, ~p"/environments/new")
 

@@ -18,7 +18,7 @@ defmodule SavvyFlagsWeb.UI do
       import SavvyFlagsWeb.UI.Breadcrumb
       import SavvyFlagsWeb.UI.Datetime
       import SavvyFlagsWeb.UI.Tag
-      import SavvyFlagsWeb.UI.CodeLabel
+      import SavvyFlagsWeb.UI.Badge
       import SavvyFlagsWeb.UI.Check
       import SavvyFlagsWeb.UI.Toggle
       import SavvyFlagsWeb.UI.NavLink

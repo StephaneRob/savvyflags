@@ -64,21 +64,20 @@ defmodule SavvyFlagsWeb.FeatureLive.Show do
       </:subtitle>
     </.breadcrumb>
 
-    <div class="flex bg-gray-50 gap-6 -mt-4">
+    <div class="flex bg-gray-50 gap-6 mb-6 -mt-2">
       <.feature_detail feature={@feature} />
     </div>
-    <div class="">
-      <div class="flex-1">
-        <div class="mt-4">
-          <.feature_environment_detail
-            :if={@environment}
-            feature={@feature}
-            environment={@environment}
-          />
-        </div>
-        <div class="-mt-4">
-          <.feature_environments :if={!@environment} feature={@feature} environments={@environments} />
-        </div>
+
+    <div class="flex-1">
+      <div class="mt-4">
+        <.feature_environment_detail
+          :if={@environment}
+          feature={@feature}
+          environment={@environment}
+        />
+      </div>
+      <div class="-mt-4">
+        <.feature_environments :if={!@environment} feature={@feature} environments={@environments} />
       </div>
     </div>
 

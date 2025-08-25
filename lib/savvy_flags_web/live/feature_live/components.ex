@@ -7,13 +7,13 @@ defmodule SavvyFlagsWeb.FeatureLive.Components do
     ~H"""
     <div>
       <p class="text-sm font-semibold mb-2">
-        Type <.code_label value={@feature.default_value.type} variant="black" />
+        Type <.badge value={@feature.default_value.type} />
       </p>
       <p></p>
     </div>
     <div>
       <p class="text-sm font-semibold mb-2">
-        Default value <.code_label value={@feature.default_value.value} variant="black" />
+        Default value <.badge value={@feature.default_value.value} />
       </p>
     </div>
     """

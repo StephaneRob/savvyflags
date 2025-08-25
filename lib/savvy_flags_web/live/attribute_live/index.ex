@@ -11,7 +11,7 @@ defmodule SavvyFlagsWeb.AttributeLive.Index do
       <:items>Attributes</:items>
       <:actions>
         <.link patch={~p"/attributes/new"}>
-          <.button>New Attribute</.button>
+          <.button>Add attribute</.button>
         </.link>
       </:actions>
       <:subtitle>
@@ -21,7 +21,7 @@ defmodule SavvyFlagsWeb.AttributeLive.Index do
 
     <.table id="attributes" rows={@streams.attributes}>
       <:col :let={{_, attribute}} label="Attribute"><code>{attribute.name}</code></:col>
-      <:col :let={{_, attribute}} label="Data type"><.code_label value={attribute.data_type} /></:col>
+      <:col :let={{_, attribute}} label="Data type"><.badge value={attribute.data_type} /></:col>
       <:col :let={{_, attribute}} label="Identifier"><.check value={attribute.identifier} /></:col>
       <:col :let={{_, attribute}} label="Description">{attribute.description}</:col>
       <:col :let={{_, attribute}} label="Remote?">

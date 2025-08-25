@@ -63,7 +63,7 @@ defmodule SavvyFlagsWeb.FeatureLive.Index do
       }
     >
       <:col :let={{_, feature}} label="Key">
-        <.code_label value={feature.key} />
+        <.badge value={feature.key} />
         <%= if feature.archived_at do %>
           <.tag variant="warning" class="ml-3">
             Archived
@@ -77,7 +77,7 @@ defmodule SavvyFlagsWeb.FeatureLive.Index do
       <:col :let={{_, feature}} label="Project">{feature.project.name}</:col>
       <:col :let={{_, feature}} label="Description">{feature.description}</:col>
       <:col :let={{_, feature}} label="Sdk cache">
-        <.code_label
+        <.badge
           :for={sdk <- SavvyFlags.FeatureCache.get("feature:#{feature.reference}:sdks") || []}
           value={sdk}
           class="mr-1"

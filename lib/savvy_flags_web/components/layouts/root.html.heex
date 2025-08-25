@@ -19,7 +19,7 @@
         <a href="/" class="font-bold flex">
           <img src={~p"/images/savvyflags-logo.svg"} class="h-6 w-6 mr-1" /> SavvyFlags
         </a>
-        <.code_label value={"v#{SavvyFlags.version()}" } class="ml-1" variant="black" />
+        <.badge value={"v#{SavvyFlags.version()}" } class="ml-1" variant="code" size="sm" />
 
         <ul class="ml-auto flex gap-4">
           <%= if @current_user do %>

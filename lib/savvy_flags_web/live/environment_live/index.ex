@@ -10,7 +10,7 @@ defmodule SavvyFlagsWeb.EnvironmentLive.Index do
       <:items>Environments</:items>
       <:actions>
         <.link patch={~p"/environments/new"}>
-          <.button>New Environment</.button>
+          <.button>Add environment</.button>
         </.link>
       </:actions>
       <:subtitle>

@@ -1,33 +1,38 @@
-defmodule SavvyFlagsWeb.UI.CodeLabel do
+defmodule SavvyFlagsWeb.UI.Badge do
   use Phoenix.Component
 
   attr :value, :string, required: true
-  attr :variant, :string, default: nil
-  attr :border, :boolean, default: true
+  attr :variant, :string, values: ~w(code default), default: "default"
+  attr :size, :string, values: ~w(sm md lg), default: "md"
   attr :class, :string, default: nil
 
-  def code_label(assigns) do
-    css =
-      case assigns[:variant] do
-        "black" ->
-          "bg-white text-black-800" <>
-            if(assigns[:border], do: " border border-black-300", else: "")
-
-        "green" ->
-          "bg-teal-100 text-teal-800" <>
-            if(assigns[:border], do: " border border-teal-300", else: "")
-
-        _ ->
-          "bg-neutral-100 text-neutral-800" <>
-            if(assigns[:border], do: " border border-neutral-300", else: "")
-      end
-
-    assigns = Map.put(assigns, :css, css)
-
+  def badge(assigns) do
     ~H"""
-    <code class={Tails.classes([@css, " rounded py-1/2 px-1 text-[10px] font-normal", @class])}>
+    <span class={
+      Tails.classes([
+        "inline-flex items-center justify-center rounded px-2 py-1 text-xs font-semibold",
+        variant(@variant),
+        size(@size),
+        @class
+      ])
+    }>
       {@value}
-    </code>
+    </span>
     """
+  end
+
+  defp variant(variant) do
+    case variant do
+      "code" -> "border border-black-300 py-1/2 px-1 font-normal"
+      _ -> "bg-neutral-200 text-neutral-900"
+    end
+  end
+
+  defp size(size) do
+    case size do
+      "sm" -> "text-[10px]"
+      "md" -> "text-xs"
+      "lg" -> "text-sm"
+    end
   end
 end

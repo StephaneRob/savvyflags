@@ -11,7 +11,7 @@ defmodule SavvyFlagsWeb.ProjectLive.Index do
       <:items>Projects</:items>
       <:actions>
         <.link patch={~p"/projects/new"}>
-          <.button>New project</.button>
+          <.button>Add project</.button>
         </.link>
       </:actions>
       <:subtitle>

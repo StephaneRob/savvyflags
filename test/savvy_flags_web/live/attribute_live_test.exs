@@ -37,8 +37,8 @@ defmodule SavvyFlagsWeb.AttributeLiveTest do
     test "logged in user should be able to create a new attribute", %{conn: conn} do
       {:ok, lv, _html} = live(conn, ~p"/attributes")
 
-      assert lv |> element("a", "New Attribute") |> render_click() =~
-               "New Attribute"
+      assert lv |> element("a", "Add attribute") |> render_click() =~
+               "New attribute"
 
       assert_patch(lv, ~p"/attributes/new")
 
