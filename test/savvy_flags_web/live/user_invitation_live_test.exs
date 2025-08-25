@@ -19,7 +19,7 @@ defmodule SavvyFlagsWeb.UserInvitationLiveTest do
 
   test "must display form with valid invitation token", %{conn: conn} do
     {:ok, user} =
-      Accounts.invite_user(%{"email" => "stephane.robino+1@gmail.com", "role" => :admin})
+      Accounts.invite_user(%{"email" => "example+1@gmail.com", "role" => :admin})
 
     {encoded_token, user_token} =
       SavvyFlags.Accounts.UserToken.build_email_token(user, "invitation")

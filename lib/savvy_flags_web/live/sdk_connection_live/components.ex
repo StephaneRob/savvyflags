@@ -79,7 +79,7 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Components do
         >
           curl -X POST {url(~p"/api/features/#{@sdk_connection.reference}")}
           <br /> -H 'content-type: application/json'
-          <br />-d '&#123;"email": "stephane.robino@gmail.com"&#125;'
+          <br />-d '&#123;"email": "example@gmail.com"&#125;'
         </code>
         <code
           :if={@sdk_connection.mode != :remote_evaluated}

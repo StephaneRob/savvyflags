@@ -119,7 +119,7 @@ defmodule SavvyFlagsWeb.Api.FeatureControllerTest do
       sdk_connection: sdk_connection
     } do
       conn =
-        post(conn, ~p"/api/features/#{sdk_connection}", %{email: "stephane.robino@gmail.com"})
+        post(conn, ~p"/api/features/#{sdk_connection}", %{email: "example@gmail.com"})
 
       assert response = json_response(conn, 200)
       assert response == %{"features" => %{"myapp:nav-v2" => "true"}}

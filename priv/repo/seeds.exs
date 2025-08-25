@@ -7,7 +7,7 @@ if System.get_env("SEED") do
 
   {:ok, _} =
     %{
-      email: "stephane.robino@gmail.com",
+      email: "mail@example.com",
       password: "azerty",
       role: :admin,
       environment_permissions: 0b1111,
@@ -48,7 +48,7 @@ if System.get_env("SEED") do
           position: 1,
           attribute_id: email_attribute.id,
           type: :match_regex,
-          value: ".*\.gmail.com$"
+          value: ".*\.example.com$"
         }
       ]
     })
@@ -72,7 +72,7 @@ if System.get_env("SEED") do
           position: 1,
           attribute_id: email_attribute.id,
           type: :match_regex,
-          value: ".*\.gmail.com$"
+          value: ".*\.example.com$"
         }
       ]
     })
@@ -106,7 +106,7 @@ if System.get_env("SEED") do
 
   {:ok, u1} =
     %{
-      email: "stephane.robino+1@gmail.com",
+      email: "mail+1@example.com",
       password: "azerty",
       role: :member,
       environment_permissions: 0b1111,
@@ -125,7 +125,7 @@ if System.get_env("SEED") do
 
   {:ok, u2} =
     %{
-      email: "stephane.robino+2@gmail.com",
+      email: "mail+2@example.com",
       password: "azerty",
       role: :member,
       environment_permissions: 0b0001,
