@@ -51,11 +51,8 @@ defmodule SavvyFlags.FeatureCache do
     del("feature:#{feature.reference}:sdks")
 
     Enum.each(sdk_connections, fn sdk_connection ->
-      Phoenix.PubSub.broadcast(
-        SavvyFlags.PubSub,
-        "sse_sdk_connection_#{sdk_connection.reference}",
-        {:sse_event, ""}
-      )
+      pubsub_topic = SdkConnections.pubsub_topic(sdk_connection)
+      Phoenix.PubSub.broadcast(SavvyFlags.PubSub, pubsub_topic, :sdk_event)
     end)
   end
 end

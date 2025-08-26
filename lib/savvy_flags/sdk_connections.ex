@@ -6,6 +6,10 @@ defmodule SavvyFlags.SdkConnections do
   alias SavvyFlags.Projects
   alias SavvyFlags.SdkConnections.{SdkConnection, SdkConnectionRequest}
 
+  def pubsub_topic(%SdkConnection{} = sdk_connection) do
+    "sdk:#{sdk_connection.reference}"
+  end
+
   def list_sdk_connections_for_feature(feature) do
     query =
       from s in SdkConnection,

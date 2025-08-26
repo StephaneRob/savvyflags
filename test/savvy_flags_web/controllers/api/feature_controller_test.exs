@@ -125,4 +125,27 @@ defmodule SavvyFlagsWeb.Api.FeatureControllerTest do
       assert response == %{"features" => %{"myapp:nav-v2" => "true"}}
     end
   end
+
+  describe "streaming" do
+    setup ctx do
+      sdk_connection =
+        sdk_connection_fixture(%{
+          name: "test-remote",
+          mode: :remote_evaluated,
+          project_ids: [ctx.project.id],
+          environment_id: ctx.environment.id
+        })
+
+      %{sdk_connection: sdk_connection}
+    end
+
+    @tag :skip
+    test "must stream events", %{
+      conn: conn,
+      sdk_connection: sdk_connection
+    } do
+      conn = get(conn, ~p"/api/features/#{sdk_connection}/stream?test=true")
+      assert get_resp_header(conn, "content-type") == ["text/event-stream"]
+    end
+  end
 end

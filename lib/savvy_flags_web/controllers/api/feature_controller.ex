@@ -7,9 +7,9 @@ defmodule SavvyFlagsWeb.Api.FeatureController do
   alias SavvyFlags.Features.FeatureEvaluator
 
   plug :fetch_sdk_connection
-  plug :check_sdk_connection_mode
-  plug :load_features, only: [:create, :index]
-  plug :emit_telemetry_event
+  plug :check_sdk_connection_mode when action in [:create, :index]
+  plug :load_features when action in [:create, :index]
+  plug :emit_telemetry_event when action in [:create, :index]
 
   def index(conn, _) do
     current_sdk_connection = conn.assigns.current_sdk_connection
@@ -53,32 +53,57 @@ defmodule SavvyFlagsWeb.Api.FeatureController do
     json(conn, %{features: evaluated_feature_flags})
   end
 
+  @heartbeat_every 30_000
   def stream(conn, _) do
-    pubsub_topic = "sse_sdk_connection_#{conn.assigns.current_sdk_connection.reference}"
+    pubsub_topic = SdkConnections.pubsub_topic(conn.assigns.current_sdk_connection)
     Phoenix.PubSub.subscribe(SavvyFlags.PubSub, pubsub_topic)
 
-    conn
-    |> put_resp_content_type("text/event-stream")
-    |> send_chunked(200)
-    |> stream_events()
+    conn =
+      conn
+      |> put_resp_header("content-type", "text/event-stream")
+      |> send_chunked(200)
+
+    Process.send_after(self(), :heartbeat, @heartbeat_every)
+    stream_events(conn, pubsub_topic)
   end
 
-  defp stream_events(conn) do
+  defp stream_events(conn, pubsub_topic) do
     receive do
-      {:sse_event, _} ->
-        case chunk(conn, "data: .\n\n") do
-          {:ok, conn} ->
-            stream_events(conn)
+      :sdk_event ->
+        stream_frame(conn, "refresh", pubsub_topic)
 
-          {:error, "closed"} ->
-            pubsub_topic = "sse_sdk_connection_#{conn.assigns.current_sdk_connection.reference}"
-            Phoenix.PubSub.subscribe(SavvyFlags.PubSub, pubsub_topic)
-            conn
-        end
+      :heartbeat ->
+        stream_frame(conn, "ping", pubsub_topic)
 
       _other ->
-        stream_events(conn)
+        stream_events(conn, pubsub_topic)
+    after
+      5 * 60_000 ->
+        cleanup(conn, pubsub_topic)
     end
+  end
+
+  defp stream_frame(conn, event, pubsub_topic) do
+    Logger.debug("SSE event: #{event}")
+
+    case chunk(conn, "data: #{event}\n\n") do
+      {:ok, conn} ->
+        if event == "ping", do: Process.send_after(self(), :heartbeat, @heartbeat_every)
+        stream_events(conn, pubsub_topic)
+
+      {:error, :closed} ->
+        Logger.debug("SSE connection closed")
+        cleanup(conn, pubsub_topic)
+    end
+  end
+
+  defp cleanup(conn, pubsub_topic) do
+    Phoenix.PubSub.unsubscribe(
+      SavvyFlags.PubSub,
+      pubsub_topic
+    )
+
+    conn
   end
 
   defp fetch_sdk_connection(conn, _) do
@@ -165,6 +190,7 @@ defmodule SavvyFlagsWeb.Api.FeatureController do
     conn
   end
 
+  # FIXME Move to sdk_connections / features OR feature_cache
   defp params_hash(params) do
     params_keyword = params |> Enum.into([]) |> Enum.sort()
     :crypto.hash(:md5, :erlang.term_to_binary(params_keyword)) |> Base.url_encode64()

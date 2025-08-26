@@ -7,9 +7,9 @@ defmodule SavvyFlagsWeb.UI.Check do
   def check(assigns) do
     ~H"""
     <%= if @value do %>
-      <.icon name="hero-check-circle-solid" class="ml-1 h-5 w-5 text-green-500" />
+      <.icon name="hero-check-circle-solid" class="ml-1 h-5 w-5 text-emerald-500" />
     <% else %>
-      <.icon name="hero-x-circle-solid" class="ml-1 h-5 w-5 text-red-500" />
+      <.icon name="hero-x-circle-solid" class="ml-1 h-5 w-5 text-rose-500" />
     <% end %>
     """
   end
