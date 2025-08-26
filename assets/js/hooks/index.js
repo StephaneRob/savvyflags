@@ -1,13 +1,13 @@
 import Sortable from './sortable'
 import Search from './search'
-import TextareaCode from './textareaCode'
 import DateTimePicker from './dateTimePicker'
 import LocalTime from './localTime'
+import CodeEditor from './codeEditor'
 
 export default {
   Sortable,
   Search,
-  TextareaCode,
   DateTimePicker,
   LocalTime,
+  CodeEditor,
 }

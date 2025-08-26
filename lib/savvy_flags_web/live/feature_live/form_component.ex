@@ -19,7 +19,15 @@ defmodule SavvyFlagsWeb.FeatureLive.FormComponent do
         phx-change="validate"
         phx-submit="save"
       >
-        <.input field={@form[:key]} label="Key *" disabled={@action == :edit} />
+        <.input
+          field={@form[:key]}
+          label="Key *"
+          disabled={@action == :edit}
+          hint={
+            @configuration.feature_key_format &&
+              "Must follow the format: #{@configuration.feature_key_format}"
+          }
+        />
         <.input field={@form[:description]} label="Description" />
         <.input field={@form[:project_id]} label="Project *" options={@form_projects} type="select" />
         <.inputs_for :let={f_default_value} field={@form[:default_value]}>
@@ -49,6 +57,7 @@ defmodule SavvyFlagsWeb.FeatureLive.FormComponent do
 
   @impl true
   def update(%{feature: feature, projects: projects} = assigns, socket) do
+    configuration = SavvyFlags.Configurations.get_configuration()
     form_projects = Enum.map(projects, &[key: &1.name, value: &1.id])
     changeset = Features.change_feature(feature)
 
@@ -59,6 +68,7 @@ defmodule SavvyFlagsWeb.FeatureLive.FormComponent do
 
     socket
     |> assign(assigns)
+    |> assign(:configuration, configuration)
     |> assign_form(changeset)
     |> ok()
   end
@@ -66,9 +76,15 @@ defmodule SavvyFlagsWeb.FeatureLive.FormComponent do
   @impl true
   def handle_event("validate", %{"feature" => feature_params}, socket) do
     changeset =
-      socket.assigns.feature
-      |> Features.change_feature(feature_params)
-      |> Map.put(:action, :validate)
+      if socket.assigns.action == :edit do
+        socket.assigns.feature
+        |> Features.change_feature(feature_params)
+        |> Map.put(:action, :validate)
+      else
+        socket.assigns.feature
+        |> Features.Feature.create_changeset(feature_params)
+        |> Map.put(:action, :validate)
+      end
 
     socket =
       socket

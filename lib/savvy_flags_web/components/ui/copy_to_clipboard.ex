@@ -13,7 +13,7 @@ defmodule SavvyFlagsWeb.UI.CopyToClipboard do
     <button
       id={"copy-button-#{@id}"}
       phx-click={
-        JS.transition("hero-clipboard-document-check text-green-500",
+        JS.transition("hero-clipboard-document-check text-green-500 h-3 w-3",
           to: "#copy-button-#{@id}",
           time: 3000
         )
@@ -21,7 +21,7 @@ defmodule SavvyFlagsWeb.UI.CopyToClipboard do
         |> JS.dispatch("phx:copy", to: "#copy-#{@id}")
       }
     >
-      <.icon id={"copy-icon-#{@id}"} name="hero-clipboard" />
+      <.icon id={"copy-icon-#{@id}"} name="hero-clipboard" class="h-3 w-3" />
     </button>
     <span id={"copy-#{@id}"} class={[@class]}>
       {@value}

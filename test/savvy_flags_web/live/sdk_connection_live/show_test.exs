@@ -27,7 +27,20 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.ShowTest do
           environment_id: List.first(environments).id
         })
 
-      %{conn: conn, user: user, sdk_connection: sdk_connection}
+      remote_sdk_connection =
+        sdk_connection_fixture(%{
+          name: "Production / Global",
+          project_ids: [List.first(projects).id],
+          environment_id: List.first(environments).id,
+          mode: :remote_evaluated
+        })
+
+      %{
+        conn: conn,
+        user: user,
+        sdk_connection: sdk_connection,
+        remote_sdk_connection: remote_sdk_connection
+      }
     end
 
     test "not logged_in user can't get sdk_connection for a given oranization", %{
@@ -57,13 +70,13 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.ShowTest do
     @tag :sign_in
     test "logged in user should be able to navigate to sandbox or metrics", %{
       conn: conn,
-      sdk_connection: sdk_connection
+      remote_sdk_connection: remote_sdk_connection
     } do
-      {:ok, lv, _html} = live(conn, ~p"/sdk-connections/#{sdk_connection}")
-      assert lv |> element("a", "Sandbox") |> render_click() =~ "Plain rules"
-      assert_patch(lv, ~p"/sdk-connections/#{sdk_connection}/sandbox")
+      {:ok, lv, _html} = live(conn, ~p"/sdk-connections/#{remote_sdk_connection}")
+      assert lv |> element("a", "Sandbox") |> render_click() =~ "API Response"
+      assert_patch(lv, ~p"/sdk-connections/#{remote_sdk_connection}/sandbox")
       assert lv |> element("a", "Metrics") |> render_click() =~ "30 days API usage"
-      assert_patch(lv, ~p"/sdk-connections/#{sdk_connection}/metrics")
+      assert_patch(lv, ~p"/sdk-connections/#{remote_sdk_connection}/metrics")
     end
   end
 end

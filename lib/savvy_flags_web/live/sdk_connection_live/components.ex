@@ -50,44 +50,63 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Components do
 
   def config(assigns) do
     ~H"""
-    <div class="mt-5">
-      <p class="font-bold w-1/4 mb-2">Mode</p>
-      <p class="mb-4">{SavvyFlags.SdkConnections.SdkConnection.mode(@sdk_connection.mode)}</p>
+    <div class="mt-5 flex gap-6">
+      <div>
+        <div class="flex gap-8">
+          <div>
+            <p class="font-bold mb-2">Mode</p>
+            <p class="mb-4">{SavvyFlags.SdkConnections.SdkConnection.mode(@sdk_connection.mode)}</p>
+          </div>
+          <div>
+            <p class="font-bold mb-2">Environment</p>
+            <p class="mb-4">{@sdk_connection.environment.name}</p>
+          </div>
+          <div>
+            <p class="font-bold mb-2">Projects</p>
+            <p class="mb-4">{Enum.map_join(@sdk_connection.projects, ", ", & &1.name)}</p>
+          </div>
+        </div>
+        <div class="flex gap-4">
+          <div>
+            <p class="font-bold mb-2">Full API endpoint</p>
+            <p class="mb-4 text-sm font-mono">
+              <.copy_to_clipboard
+                value={url(~p"/api/features/#{@sdk_connection.reference}")}
+                id="endpoint"
+              />
+            </p>
+          </div>
+          <div>
+            <p class="font-bold mb-2">Client Key</p>
+            <p class="mb-4 text-sm font-mono">
+              <.copy_to_clipboard value={@sdk_connection.reference} id="key" />
+            </p>
+          </div>
+        </div>
 
-      <p class="font-bold w-1/4 mb-2">Full API endpoint</p>
-      <p class="mb-4">
-        <code>
-          <.copy_to_clipboard
-            value={url(~p"/api/features/#{@sdk_connection.reference}")}
-            id="endpoint"
-          />
-        </code>
-      </p>
-
-      <p class="font-bold w-1/4 mb-2">Client Key</p>
-      <p class="mb-4">
-        <code>
-          <.copy_to_clipboard value={@sdk_connection.reference} id="key" />
-        </code>
-      </p>
-
-      <p class="font-bold mb-3">Usage</p>
-      <p class="mb-4">
-        <code
-          :if={@sdk_connection.mode == :remote_evaluated}
-          class="font-mono bg-gray-800 text-white p-2"
-        >
-          curl -X POST {url(~p"/api/features/#{@sdk_connection.reference}")}
-          <br /> -H 'content-type: application/json'
-          <br />-d '&#123;"email": "example@gmail.com"&#125;'
-        </code>
-        <code
-          :if={@sdk_connection.mode != :remote_evaluated}
-          class="font-mono bg-gray-800 text-white p-2"
-        >
-          curl -X GET {url(~p"/api/features/#{@sdk_connection.reference}")}
-        </code>
-      </p>
+        <p class="font-bold mb-3">Usage</p>
+        <div class="rounded shadow p-4 font-mono bg-neutral-800 text-xs text-white">
+          <pre :if={@sdk_connection.mode == :remote_evaluated}><code class="">curl -X POST {url(~p"/api/features/#{@sdk_connection.reference}")} \<br />-H 'content-type: application/json' \<br />-d '&#123;"email": "example@gmail.com"&#125;'</code></pre>
+          <pre :if={@sdk_connection.mode == :plain}><code>curl -X GET {url(~p"/api/features/#{@sdk_connection.reference}")}</code></pre>
+        </div>
+      </div>
+      <div class="flex-1">
+        <p class="font-bold mb-2">API response</p>
+        <div class="rounded shadow p-4 font-mono bg-neutral-800 text-xs text-white">
+          <pre><code class=""><%= @plain_rules %></code></pre>
+        </div>
+        <p :if={@sdk_connection.mode == :remote_evaluated} class="mt-2 text-xs text-neutral-700">
+          The payload you send can contain any attributes you want. You can use these
+          attributes in your rules to target specific users. For example, you could send the
+          user's email, country, or any other attribute you want.
+          <.link
+            patch={~p"/sdk-connections/#{@sdk_connection}/sandbox"}
+            class="font-semibold border-b border-neutral-400 hover:border-emerald-500 hover:text-emerald-500"
+          >
+            Try it here!
+          </.link>
+        </p>
+      </div>
     </div>
     """
   end
@@ -95,41 +114,39 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Components do
   def sandbox(assigns) do
     ~H"""
     <div class="mt-6 flex gap-5">
-      <div :if={@sdk_connection.mode == :remote_evaluated} class="flex-1">
+      <div class="flex-1">
         <h1 class="text-md mb-3 font-semibold">
           Test your payload here
         </h1>
-        <div :if={@sdk_connection.mode == :remote_evaluated} class="">
-          <form phx-change="try-it-change">
-            <textarea
-              class="w-full rounded border  border-gray-200 font-mono"
-              rows="5"
-              id="textbox"
-              name="attributes"
-              phx-hook="TextareaCode"
-            >{}</textarea>
-            <p class="text-sm text-gray-700">
-              <span :if={!@json_valid?} class="text-xs text-red-600"> Invalid json</span>
-            </p>
-          </form>
-        </div>
-      </div>
-      <div :if={@sdk_connection.mode == :remote_evaluated} class="flex-1">
-        <h1 class="text-md mb-3 font-semibold">
-          API Response
-        </h1>
-        <div class="rounded shadow p-4 font-mono bg-gray-800 text-white">
-          <pre><code class=""><%= @try_it_result %></code></pre>
-        </div>
-      </div>
-    </div>
+        <div class="">
+          <div class="rounded border border-neutral-400">
+            <div
+              id="sandbox-remote"
+              phx-hook="CodeEditor"
+              phx-update="ignore"
+              data-initial-value={@json}
+            />
+          </div>
 
-    <div :if={@sdk_connection.mode == :plain} class="mt-5">
-      <h2 class="text-md mb-3 font-semibold">
-        Plain rules
-      </h2>
-      <div class="rounded shadow p-4 font-mono bg-gray-800 text-white">
-        <pre><code class=""><%= @plain_rules %></code></pre>
+          <p class="text-xs text-neutral-700 mt-1">
+            Available attributes:
+            <.badge :for={attr <- @attributes} value={attr.name} size="sm" class="mr-1" />
+          </p>
+          <p :if={!@json_valid?} class="text-xs  text-red-600">Invalid JSON</p>
+
+          <p class="mt-2 font-semibold">Curl</p>
+          <div class="rounded shadow p-4 font-mono bg-neutral-800 text-xs text-white">
+            <pre><code class="">curl -X POST {url(~p"/api/features/#{@sdk_connection.reference}")} \<br />-H 'content-type: application/json' \<br />-d '<%= @json %>'</code></pre>
+          </div>
+        </div>
+      </div>
+      <div class="flex-1">
+        <h1 class="text-md mb-3 font-semibold">
+          Evaluated API Response
+        </h1>
+        <div class="rounded shadow p-4 font-mono bg-neutral-800 text-xs text-white">
+          <pre><code class=""><%= @evaluation_result %></code></pre>
+        </div>
       </div>
     </div>
     """
@@ -163,7 +180,7 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Components do
             "inline-block px-4 py-2 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300",
             if(@active,
               do:
-                "inline-block px-4 py-2 text-neutral-600 border-b-2 border-neutral-600 rounded-t-lg active hover:text-neutral-700 hover:border-neutral-700",
+                "inline-block px-4 py-2 text-emerald-600 border-b-2 border-emerald-600 rounded-t-lg active hover:text-emerald-600 hover:border-emerald-600",
               else: ""
             )
           ])

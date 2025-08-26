@@ -65,9 +65,7 @@ defmodule SavvyFlagsWeb.FeatureLive.Index do
       <:col :let={{_, feature}} label="Key">
         <.badge value={feature.key} />
         <%= if feature.archived_at do %>
-          <.tag variant="warning" class="ml-3">
-            Archived
-          </.tag>
+          <.badge variant="warning" class="ml-3" value="Archived" size="sm" />
         <% end %>
       </:col>
       <:col :let={{_, feature}} label="Default value">
@@ -157,7 +155,7 @@ defmodule SavvyFlagsWeb.FeatureLive.Index do
 
   defp apply_action(socket, :index, _params) do
     socket
-    |> assign(:page_title, "Listing feature")
+    |> assign(:page_title, "Features")
     |> assign(:feature, nil)
   end
 

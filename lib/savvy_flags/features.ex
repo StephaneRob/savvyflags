@@ -120,7 +120,7 @@ defmodule SavvyFlags.Features do
 
   def create_feature(attrs \\ %{}) do
     %Feature{}
-    |> Feature.changeset(attrs)
+    |> Feature.create_changeset(attrs)
     |> Repo.insert()
   end
 
@@ -150,7 +150,7 @@ defmodule SavvyFlags.Features do
 
   def archive_feature(feature) do
     feature
-    |> change_feature(%{archived_at: DateTime.utc_now()})
+    |> Ecto.Changeset.change(%{archived_at: DateTime.utc_now() |> DateTime.truncate(:second)})
     |> Repo.update()
   end
 

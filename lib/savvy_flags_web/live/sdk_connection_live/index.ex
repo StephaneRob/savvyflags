@@ -114,7 +114,7 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Index do
 
   defp apply_action(socket, :index, _params) do
     socket
-    |> assign(:page_title, "Listing SDK connections")
+    |> assign(:page_title, "SDK connections")
     |> assign(:sdk_connection, nil)
   end
 

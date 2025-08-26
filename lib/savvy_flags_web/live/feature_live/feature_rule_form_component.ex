@@ -37,7 +37,7 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
         <fieldset class="flex flex-col gap-2">
           <legend class="font-bold">Conditions</legend>
           <.inputs_for :let={f_feature_rule_condition} field={@form[:feature_rule_conditions]}>
-            <div class={"flex gap-3 items-start" <> if(f_feature_rule_condition[:delete].value == "true", do: " opacity-20", else: "")}>
+            <div class={"flex gap-2 items-center" <> if(f_feature_rule_condition[:delete].value == "true", do: " opacity-20", else: "")}>
               <.input
                 field={f_feature_rule_condition[:attribute_id]}
                 type="select"
@@ -64,21 +64,23 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
                 type="hidden"
                 id={"frc_position_id_#{f_feature_rule_condition[:reference].value}"}
               />
+
+              <.button
+                class="mt-2"
+                type="button"
+                variant="link"
+                size="sm"
+                phx-value-index={f_feature_rule_condition.index}
+                phx-click="delete-line"
+                phx-target={@myself}
+              >
+                <.icon name="hero-trash" class="h-3 w-3 text-red-500" />
+              </.button>
               <.input
                 field={f_feature_rule_condition[:delete]}
                 type="hidden"
                 id={"frc_delete_#{f_feature_rule_condition[:reference].value}"}
               />
-              <.button
-                class="mt-2"
-                type="button"
-                variant="outline-danger"
-                phx-value-index={f_feature_rule_condition.index}
-                phx-click="delete-line"
-                phx-target={@myself}
-              >
-                delete
-              </.button>
             </div>
           </.inputs_for>
           <%= if @form[:feature_rule_conditions].value == [] do %>

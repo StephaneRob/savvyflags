@@ -16,10 +16,10 @@ defmodule SavvyFlagsWeb.FeatureLive.Show do
     ~H"""
     <.breadcrumb>
       <:items><.link navigate={~p"/features"}>Features</.link></:items>
-      <:items :if={!@environment}>{@feature.key}</:items>
+      <:items :if={!@environment}><.badge value={@feature.key} /></:items>
       <:items :if={@environment}>
         <.link :if={@environment} patch={~p"/features/#{@feature}"}>
-          {@feature.key}
+          <.badge value={@feature.key} />
         </.link>
       </:items>
       <:items :if={@environment}>
@@ -54,17 +54,10 @@ defmodule SavvyFlagsWeb.FeatureLive.Show do
           />
         </form>
       </:actions>
-      <:subtitle>
-        <span :if={@feature.description not in [nil, ""]} class="text-sm font-semibold">
-          {@feature.description}
-        </span>
-        <span :if={@feature.description in [nil, ""]} class="text-sm italic text-gray-700 font-normal">
-          No description provided
-        </span>
-      </:subtitle>
+      <:subtitle></:subtitle>
     </.breadcrumb>
 
-    <div class="flex bg-gray-50 gap-6 mb-6 -mt-2">
+    <div class=" mb-6 -mt-2">
       <.feature_detail feature={@feature} />
     </div>
 
@@ -120,6 +113,7 @@ defmodule SavvyFlagsWeb.FeatureLive.Show do
 
         socket
         |> assign(:feature, feature)
+        |> assign(:page_title, "Feature #{feature.key}")
         |> assign(:environments, environments)
         |> assign(:active_nav, :features)
       else

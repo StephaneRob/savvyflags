@@ -2,6 +2,7 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Show do
   use SavvyFlagsWeb, :live_view
 
   import SavvyFlagsWeb.SdkConnectionLive.Components
+  alias SavvyFlags.Attributes
   alias SavvyFlags.Features
   alias SavvyFlags.Features.FeatureEvaluator
   alias SavvyFlags.SdkConnections
@@ -17,7 +18,7 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Show do
       <:items><.badge value={@sdk_connection.reference} /></:items>
     </.breadcrumb>
 
-    <div class="-mt-10">
+    <div class="-mt-4">
       <.navtabs>
         <:tabs>
           <.tablink
@@ -26,7 +27,7 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Show do
             patch={~p"/sdk-connections/#{@sdk_connection}"}
           />
         </:tabs>
-        <:tabs>
+        <:tabs :if={@sdk_connection.mode == :remote_evaluated}>
           <.tablink
             name="Sandbox"
             active={@live_action == :sandbox}
@@ -43,7 +44,7 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Show do
       </.navtabs>
     </div>
 
-    <.config :if={@live_action == :show} sdk_connection={@sdk_connection} />
+    <.config :if={@live_action == :show} sdk_connection={@sdk_connection} plain_rules={@plain_rules} />
 
     <.metrics
       :if={@live_action == :metrics}
@@ -56,9 +57,10 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Show do
     <.sandbox
       :if={@live_action == :sandbox}
       sdk_connection={@sdk_connection}
-      try_it_result={@try_it_result}
+      attributes={@attributes}
+      evaluation_result={@evaluation_result}
       json_valid?={@json_valid?}
-      plain_rules={@plain_rules}
+      json={@json}
     />
     """
   end
@@ -68,8 +70,21 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Show do
     sdk_connection =
       SdkConnections.get_sdk_connection!(sdk_connection_reference)
 
+    features =
+      Features.list_features_for_projects_and_environments(
+        sdk_connection.projects |> Enum.map(& &1.id),
+        sdk_connection.environment_id
+      )
+
+    payload = FeatureEvaluator.build_plain_payload(sdk_connection, features, false)
+    plain_rules = Jason.encode!(payload, pretty: true)
+
     socket
     |> assign(sdk_connection: sdk_connection, active_nav: :sdk_connections)
+    |> assign(:attributes, Attributes.list_attributes())
+    |> assign(:page_title, "SDK connection #{sdk_connection.reference}")
+    |> assign(:features, features)
+    |> assign(:plain_rules, plain_rules)
     |> ok()
   end
 
@@ -106,23 +121,11 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Show do
   end
 
   defp apply_action(socket, :sandbox, _) do
-    sdk_connection = socket.assigns.sdk_connection
-
-    features =
-      Features.list_features_for_projects_and_environments(
-        sdk_connection.projects |> Enum.map(& &1.id),
-        sdk_connection.environment_id
-      )
-
-    payload = FeatureEvaluator.build_plain_payload(sdk_connection, features, false)
-    plain_rules = Jason.encode!(payload, pretty: true)
-
     socket
     |> assign(
-      try_it_result: "{}",
-      json_valid?: true,
-      features: features,
-      plain_rules: plain_rules
+      json: "{\"email\":\"example@gmail.com\"}",
+      evaluation_result: "{}",
+      json_valid?: true
     )
     |> eval_sdk(socket.assigns.sdk_connection, %{})
   end
@@ -140,7 +143,7 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Show do
   end
 
   @impl true
-  def handle_event("try-it-change", %{"attributes" => attributes}, socket) do
+  def handle_event("evaluate", %{"attributes" => attributes}, socket) do
     sdk_connection = socket.assigns.sdk_connection
 
     attributes =
@@ -148,11 +151,13 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Show do
 
     socket =
       case Jason.decode(attributes) do
-        {:ok, attributes} ->
-          eval_sdk(socket, sdk_connection, attributes)
+        {:ok, decoded_attributes} ->
+          socket
+          |> assign(:json, attributes)
+          |> eval_sdk(sdk_connection, decoded_attributes)
 
         {:error, _} ->
-          socket |> assign(:json_valid?, false)
+          assign(socket, :json_valid?, false)
       end
 
     noreply(socket)
@@ -161,13 +166,11 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Show do
   defp eval_sdk(socket, %SdkConnection{mode: :remote_evaluated}, attributes) do
     features = socket.assigns.features
     evaluated_feature_flags = FeatureEvaluator.eval(features, attributes)
+    evaluation_result = Jason.encode!(evaluated_feature_flags, pretty: true)
 
     socket
     |> assign(:json_valid?, true)
-    |> assign(
-      :try_it_result,
-      Jason.encode!(evaluated_feature_flags, pretty: true)
-    )
+    |> assign(:evaluation_result, evaluation_result)
   end
 
   defp eval_sdk(socket, _, _) do

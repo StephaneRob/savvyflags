@@ -52,7 +52,7 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.IndexTest do
       conn: conn
     } do
       {:ok, _lv, html} = live(conn, ~p"/sdk-connections")
-      assert html =~ "Listing SDK connections"
+      assert html =~ "SDK connections"
     end
 
     @tag :sign_in

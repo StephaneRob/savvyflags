@@ -21,6 +21,12 @@ defmodule SavvyFlags.Features.Feature do
     timestamps(type: :utc_datetime)
   end
 
+  def create_changeset(feature, attrs) do
+    feature
+    |> changeset(attrs)
+    |> validate_key_format()
+  end
+
   @doc false
   def changeset(feature, attrs) do
     feature
@@ -33,7 +39,6 @@ defmodule SavvyFlags.Features.Feature do
     ])
     |> cast_embed(:default_value, with: &FeatureValue.changeset/2)
     |> validate_length(:description, max: 150)
-    |> validate_key_format()
     |> validate_required([:key, :project_id])
   end
 

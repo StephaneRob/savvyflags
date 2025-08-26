@@ -5,16 +5,27 @@ defmodule SavvyFlagsWeb.FeatureLive.Components do
 
   def feature_detail(assigns) do
     ~H"""
-    <div>
-      <p class="text-sm font-semibold mb-2">
-        Type <.badge value={@feature.default_value.type} />
-      </p>
-      <p></p>
-    </div>
-    <div>
-      <p class="text-sm font-semibold mb-2">
-        Default value <.badge value={@feature.default_value.value} />
-      </p>
+    <p class="mb-2">
+      <span class="not-italic font-bold text-black">Description:</span>
+      <span :if={@feature.description not in [nil, ""]} class="text-sm ">
+        {@feature.description}
+      </span>
+      <span :if={@feature.description in [nil, ""]} class="text-sm italic text-gray-700 font-normal">
+        No description provided
+      </span>
+    </p>
+    <div class="flex gap-6">
+      <div>
+        <p class="text-sm font-semibold mb-2">
+          Type <.badge value={@feature.default_value.type} />
+        </p>
+        <p></p>
+      </div>
+      <div>
+        <p class="text-sm font-semibold mb-2">
+          Default value <.badge value={@feature.default_value.value} />
+        </p>
+      </div>
     </div>
     """
   end
