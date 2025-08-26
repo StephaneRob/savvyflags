@@ -21,7 +21,7 @@ defmodule SavvyFlags.MixProject do
         "coveralls.html": :test,
         "coveralls.cobertura": :test
       ],
-      listeners: [Phoenix.CodeReloader],
+      listeners: listeners(),
       compilers: [:phoenix_live_view] ++ Mix.compilers()
     ]
   end
@@ -34,6 +34,18 @@ defmodule SavvyFlags.MixProject do
       mod: {SavvyFlags.Application, []},
       extra_applications: [:logger, :runtime_tools]
     ]
+  end
+
+  defp listeners do
+    if dependabot?() do
+      []
+    else
+      [Phoenix.CodeReloader]
+    end
+  end
+
+  defp dependabot? do
+    Enum.any?(System.get_env(), fn {key, _value} -> String.starts_with?(key, "DEPENDABOT") end)
   end
 
   # Specifies which paths to compile per environment.
