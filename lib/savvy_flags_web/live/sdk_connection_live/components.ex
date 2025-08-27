@@ -112,6 +112,16 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Components do
   end
 
   def sandbox(assigns) do
+    attributes = assigns[:attributes] || []
+
+    attributes_name =
+      attributes
+      |> Enum.sort_by(& &1.inserted_at)
+      |> Enum.map(& &1.name)
+      |> Jason.encode!()
+
+    assigns = assign(assigns, attributes_name: attributes_name)
+
     ~H"""
     <div class="mt-6 flex gap-5">
       <div class="flex-1">
@@ -125,6 +135,7 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Components do
               phx-hook="CodeEditor"
               phx-update="ignore"
               data-initial-value={@json}
+              data-attributes={@attributes_name}
             />
           </div>
 
@@ -136,7 +147,7 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Components do
 
           <p class="mt-2 font-semibold">Curl</p>
           <div class="rounded shadow p-4 font-mono bg-neutral-800 text-xs text-white">
-            <pre><code class="">curl -X POST {url(~p"/api/features/#{@sdk_connection.reference}")} \<br />-H 'content-type: application/json' \<br />-d '<%= @json %>'</code></pre>
+            <pre><code class="">curl -X POST {url(~p"/api/features/#{@sdk_connection.reference}")} \<br />-H 'content-type: application/json' \<br />-d '<%= Jason.encode!(Jason.decode!(@json)) %>'</code></pre>
           </div>
         </div>
       </div>

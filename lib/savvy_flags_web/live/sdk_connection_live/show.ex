@@ -123,7 +123,7 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Show do
   defp apply_action(socket, :sandbox, _) do
     socket
     |> assign(
-      json: "{\"email\":\"example@gmail.com\"}",
+      json: "{\n  \"email\":\"example@gmail.com\"\n}",
       evaluation_result: "{}",
       json_valid?: true
     )
@@ -143,18 +143,15 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Show do
   end
 
   @impl true
-  def handle_event("evaluate", %{"attributes" => attributes}, socket) do
+  def handle_event("evaluate", %{"payload" => payload}, socket) do
     sdk_connection = socket.assigns.sdk_connection
 
-    attributes =
-      String.replace(attributes, "\t\n", "")
-
     socket =
-      case Jason.decode(attributes) do
-        {:ok, decoded_attributes} ->
+      case Jason.decode(payload) do
+        {:ok, decoded_payload} ->
           socket
-          |> assign(:json, attributes)
-          |> eval_sdk(sdk_connection, decoded_attributes)
+          |> assign(:json, payload)
+          |> eval_sdk(sdk_connection, decoded_payload)
 
         {:error, _} ->
           assign(socket, :json_valid?, false)
@@ -163,9 +160,9 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Show do
     noreply(socket)
   end
 
-  defp eval_sdk(socket, %SdkConnection{mode: :remote_evaluated}, attributes) do
+  defp eval_sdk(socket, %SdkConnection{mode: :remote_evaluated}, payload) do
     features = socket.assigns.features
-    evaluated_feature_flags = FeatureEvaluator.eval(features, attributes)
+    evaluated_feature_flags = FeatureEvaluator.eval(features, payload)
     evaluation_result = Jason.encode!(evaluated_feature_flags, pretty: true)
 
     socket

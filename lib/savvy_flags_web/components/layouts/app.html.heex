@@ -1,10 +1,9 @@
 <main class="">
   <.flash_group flash={@flash} />
   <div class="flex min-h-full">
-    <div :if={assigns[:current_user]} class="px-0 py-3 min-h-full">
-      <ul class="flex flex-col gap-2 px-4 w-52">
-        <%!-- <.navlink label="Home" navigate={~p"/home"} active={@active_nav == :home} /> --%>
-        <li class="font-semibold text-neutral-800">Features</li>
+    <div :if={assigns[:current_user]} class="px-2 min-h-full">
+      <ul class="mt-4 flex flex-col gap-2 px-4 py-3  w-52 border rounded-lg border-neutral-100 shadow-lg bg-white">
+        <li class="font-semibold text-lg text-neutral-800">Features</li>
         <.navlink label="Features" navigate={~p"/features"} active={@active_nav == :features} />
         <.navlink
           label="Attributes"
@@ -23,7 +22,7 @@
           active={@active_nav == :sdk_connections}
         />
         <%= if @current_user.role in [:owner, :admin] do %>
-          <li class="font-semibold text-neutral-800">Admin</li>
+          <li class="font-semibold text-lg text-neutral-800">Admin</li>
           <.navlink label="Users" navigate={~p"/users"} active={@active_nav == :users} />
           <.navlink
             label="Configuration"
