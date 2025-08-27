@@ -2,6 +2,7 @@ defmodule SavvyFlags.SdkConnections.SdkConnectionStats do
   use GenServer
   require Logger
 
+  alias SavvyFlags.Features
   alias SavvyFlags.SdkConnections
 
   def start_link(_) do
@@ -10,7 +11,6 @@ defmodule SavvyFlags.SdkConnections.SdkConnectionStats do
 
   def init(_) do
     Process.flag(:trap_exit, true)
-    setup()
     {:ok, %{}}
   end
 
@@ -19,23 +19,17 @@ defmodule SavvyFlags.SdkConnections.SdkConnectionStats do
     {:stop, reason, state}
   end
 
-  def handle_cast({:enqueue, meta}, state) do
-    %{sdk_connection_id: sdk_connection_id} = meta
+  def handle_cast({:stats, %{sdk_connection_id: sdk_connection_id, features: features}}, state) do
     SdkConnections.incr_requests(sdk_connection_id)
+    Features.touch(features)
     {:noreply, state}
   end
 
-  def setup do
-    handlers = %{
-      [:sdk_connection, :start] => &__MODULE__.sdk_connection_start/4
-    }
-
-    for {key, fun} <- handlers do
-      :telemetry.attach({__MODULE__, key}, key, fun, :ok)
-    end
+  def handle_cast({:stats, _}, state) do
+    {:noreply, state}
   end
 
-  def sdk_connection_start(_, _, meta, _) do
-    GenServer.cast(__MODULE__, {:enqueue, meta})
+  def update_stats(meta) do
+    GenServer.cast(__MODULE__, {:stats, meta})
   end
 end

@@ -12,6 +12,7 @@ defmodule SavvyFlags.Features.Feature do
     field :description, :string
     field :environments_enabled, {:array, :integer}, default: []
     field :archived_at, :utc_datetime
+    field :last_used_at, :utc_datetime
     embeds_one :default_value, FeatureValue, on_replace: :delete
     belongs_to :project, SavvyFlags.Projects.Project
     has_many :feature_rules, SavvyFlags.Features.FeatureRule

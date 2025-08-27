@@ -10,6 +10,7 @@ defmodule SavvyFlags.Repo.Migrations.CreateFeatures do
       add :project_id, references(:projects, on_delete: :delete_all)
       add :environments_enabled, {:array, :integer}, default: []
       add :archived_at, :utc_datetime
+      add :last_used_at, :utc_datetime
 
       timestamps(type: :utc_datetime)
     end

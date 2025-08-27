@@ -9,7 +9,7 @@ defmodule SavvyFlagsWeb.Api.FeatureController do
   plug :fetch_sdk_connection
   plug :check_sdk_connection_mode when action in [:create, :index]
   plug :load_features when action in [:create, :index]
-  plug :emit_telemetry_event when action in [:create, :index]
+  plug :stats when action in [:create, :index]
 
   def index(conn, _) do
     current_sdk_connection = conn.assigns.current_sdk_connection
@@ -182,9 +182,10 @@ defmodule SavvyFlagsWeb.Api.FeatureController do
     |> halt()
   end
 
-  defp emit_telemetry_event(conn, _) do
-    :telemetry.execute([:sdk_connection, :start], %{}, %{
-      sdk_connection_id: conn.assigns.current_sdk_connection.id
+  defp stats(conn, _) do
+    SavvyFlags.SdkConnections.SdkConnectionStats.update_stats(%{
+      sdk_connection_id: conn.assigns.current_sdk_connection.id,
+      features: Enum.map(conn.assigns.features, & &1.id)
     })
 
     conn

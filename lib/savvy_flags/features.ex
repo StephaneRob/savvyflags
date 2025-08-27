@@ -31,7 +31,7 @@ defmodule SavvyFlags.Features do
   defp list_features_query(filters) do
     query =
       from f in Feature,
-        order_by: [asc: f.inserted_at],
+        order_by: [desc: f.inserted_at],
         join: p in assoc(f, :project)
 
     where(query, [f, p], ^filters(filters))
@@ -50,6 +50,7 @@ defmodule SavvyFlags.Features do
         left_join: u in assoc(f, :users),
         join: p in assoc(f, :project),
         left_join: up in assoc(p, :users),
+        order_by: [desc: f.inserted_at],
         where: u.id == ^user_id or up.id == ^user_id
 
     where(query, [f], ^filters(filters))
@@ -126,6 +127,24 @@ defmodule SavvyFlags.Features do
 
   def delete_feature(feature) do
     Repo.delete(feature)
+  end
+
+  def touch(feature_ids) when is_list(feature_ids) do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    query =
+      from f in Feature,
+        where:
+          f.id in ^feature_ids and (f.last_used_at > ago(15, "minute") or is_nil(f.last_used_at)),
+        update: [set: [last_used_at: ^now]]
+
+    Repo.update_all(query, [])
+  end
+
+  def touch(feature) do
+    feature
+    |> Ecto.Changeset.change(%{last_used_at: DateTime.utc_now() |> DateTime.truncate(:second)})
+    |> Repo.update()
   end
 
   def update_feature(feature, attrs \\ %{}) do

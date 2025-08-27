@@ -67,13 +67,14 @@ defmodule SavvyFlagsWeb.FeatureLive.Index do
         <%= if feature.archived_at do %>
           <.badge variant="warning" class="ml-3" value="Archived" size="sm" />
         <% end %>
+        <br />
+        <span class="text-xs font-normal text-neutral-500">{feature.description}</span>
       </:col>
       <:col :let={{_, feature}} label="Default value">
         {feature.default_value.value}
       </:col>
       <:col :let={{_, feature}} label="Value type">{feature.default_value.type}</:col>
       <:col :let={{_, feature}} label="Project">{feature.project.name}</:col>
-      <:col :let={{_, feature}} label="Description">{feature.description}</:col>
       <:col :let={{_, feature}} label="Sdk cache">
         <.badge
           :for={sdk <- SavvyFlags.FeatureCache.get("feature:#{feature.reference}:sdks") || []}
@@ -81,15 +82,19 @@ defmodule SavvyFlagsWeb.FeatureLive.Index do
           class="mr-1"
         />
       </:col>
-      <:col :let={{_, feature}} label="Created at">
-        <.datetime value={feature.inserted_at} />
+      <:col :let={{_, feature}} label="Last used at">
+        <%= if feature.last_used_at do %>
+          {Timex.from_now(feature.last_used_at, "en")}
+        <% else %>
+          Never
+        <% end %>
       </:col>
       <:col :let={{_, feature}} label="Last updated at">
         <.datetime value={feature.updated_at} />
       </:col>
       <:action :let={{_id, feature}}>
         <.link :if={is_nil(feature.archived_at)} patch={~p"/features/#{feature}/edit"}>
-          Edit
+          <.icon name="hero-pencil-square" class="w-4 h-4" />
         </.link>
       </:action>
       <:action :let={{_id, feature}}>
@@ -99,7 +104,7 @@ defmodule SavvyFlagsWeb.FeatureLive.Index do
           phx-click="archive"
           phx-value-feature={feature.id}
         >
-          <span class="text-red-600">Archive</span>
+          <.icon name="hero-archive-box-arrow-down" class="w-4 h-4 text-rose-500" />
         </.link>
       </:action>
     </.table>
