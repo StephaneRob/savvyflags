@@ -7,14 +7,15 @@ defmodule SavvyFlagsWeb.UI.CopyToClipboard do
   attr :value, :string, required: true
   attr :id, :string, required: true
   attr :class, :string, default: nil
-  slot :inner_block, required: false
+  attr :icon, :boolean, default: false
 
   def copy_to_clipboard(assigns) do
     ~H"""
     <button
       id={"copy-button-#{@id}"}
+      class={@class}
       phx-click={
-        JS.transition("hero-clipboard-document-check text-green-500 h-3 w-3",
+        JS.transition("hero-clipboard-document-check text-green-500 h-4 w-4",
           to: "#copy-button-#{@id}",
           time: 3000
         )
@@ -22,10 +23,10 @@ defmodule SavvyFlagsWeb.UI.CopyToClipboard do
         |> JS.dispatch("phx:copy", to: "#copy-#{@id}")
       }
     >
-      <.icon id={"copy-icon-#{@id}"} name="hero-clipboard" class="h-3 w-3" />
+      <.icon id={"copy-icon-#{@id}"} name="hero-clipboard" class="h-4 w-4" />
     </button>
-    <span id={"copy-#{@id}"} class={[@class]}>
-      {render_slot(@inner_block) || @value}
+    <span id={"copy-#{@id}"} class={[@icon && "hidden"]}>
+      {@value}
     </span>
     """
   end

@@ -43,6 +43,19 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Components do
   attr :plain_rules, :string, required: true
 
   def config(assigns) do
+    sdk_connection = assigns[:sdk_connection]
+
+    assigns =
+      assign_new(assigns, :copiable_curl, fn ->
+        if sdk_connection.mode == :plain do
+          "curl -X GET #{url(~p"/api/features/#{sdk_connection.reference}")}"
+        else
+          "curl -X POST #{url(~p"/api/features/#{sdk_connection.reference}")} \\
+-H 'content-type: application/json' \\
+-d '{\"email\": \"example@gmail.com\"}'"
+        end
+      end)
+
     ~H"""
     <div class="mt-5 flex gap-6">
       <div>
@@ -79,9 +92,14 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Components do
         </div>
 
         <p class="font-bold mb-3">Usage</p>
-        <div class="rounded shadow p-4 font-mono bg-neutral-800 text-xs text-white">
-          <pre :if={@sdk_connection.mode == :remote_evaluated}><code class="">curl -X POST {url(~p"/api/features/#{@sdk_connection.reference}")} \<br />-H 'content-type: application/json' \<br />-d '&#123;"email": "example@gmail.com"&#125;'</code></pre>
-          <pre :if={@sdk_connection.mode == :plain}><code>curl -X GET {url(~p"/api/features/#{@sdk_connection.reference}")}</code></pre>
+        <div class="rounded shadow p-4 font-mono bg-neutral-800 text-xs text-white relative">
+          <.copy_to_clipboard
+            value={@copiable_curl}
+            id="curl"
+            icon={true}
+            class="absolute top-2 right-2"
+          />
+          <pre><code class="">{@copiable_curl}</code></pre>
         </div>
       </div>
       <div class="flex-1">
@@ -105,8 +123,16 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Components do
     """
   end
 
+  attr :attributes, :list, default: []
+  attr :json, :string, default: "{}"
+  attr :json_valid?, :boolean, default: true
+  attr :sdk_connection, SdkConnection, required: true
+  attr :evaluation_result, :string, default: "{}"
+
   def sandbox(assigns) do
     attributes = assigns[:attributes] || []
+    sdk_connection = assigns[:sdk_connection]
+    json = assigns[:json] || "{}"
 
     attributes_name =
       attributes
@@ -114,7 +140,14 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Components do
       |> Enum.map(& &1.name)
       |> Jason.encode!()
 
-    assigns = assign(assigns, attributes_name: attributes_name)
+    assigns =
+      assigns
+      |> assign(attributes_name: attributes_name)
+      |> assign_new(:copiable_curl, fn ->
+        "curl -X POST #{url(~p"/api/features/#{sdk_connection.reference}")} \\
+-H 'content-type: application/json' \\
+-d '#{Jason.encode!(Jason.decode!(json))}'"
+      end)
 
     ~H"""
     <div class="mt-6 flex gap-5">
@@ -140,8 +173,14 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Components do
           <p :if={!@json_valid?} class="text-xs  text-red-600">Invalid JSON</p>
 
           <p class="mt-2 font-semibold">Curl</p>
-          <div class="rounded shadow p-4 font-mono bg-neutral-800 text-xs text-white">
-            <pre><code class="">curl -X POST {url(~p"/api/features/#{@sdk_connection.reference}")} \<br />-H 'content-type: application/json' \<br />-d '<%= Jason.encode!(Jason.decode!(@json)) %>'</code></pre>
+          <div class="rounded shadow p-4 font-mono bg-neutral-800 text-xs text-white relative">
+            <.copy_to_clipboard
+              value={@copiable_curl}
+              id="curl-sandbox"
+              icon={true}
+              class="absolute top-2 right-2"
+            />
+            <pre><code>{@copiable_curl}</code></pre>
           </div>
         </div>
       </div>
