@@ -2,6 +2,7 @@ defmodule SavvyFlags.Features do
   import Ecto.Query
   alias SavvyFlags.Features.FeatureStat
   alias SavvyFlags.Accounts
+  alias SavvyFlags.Configurations
   alias SavvyFlags.Features.FeatureRuleCondition
   alias SavvyFlags.Repo
   alias SavvyFlags.Features.Feature
@@ -187,10 +188,9 @@ defmodule SavvyFlags.Features do
     |> Repo.update()
   end
 
-  # TODO: Make it configurable
-  @stale_threshold 60 * 24
-
   def stale?(feature) do
+    threshold = Configurations.stale_threshold()
+
     last_used_at =
       if feature.feature_stats != [] do
         List.first(feature.feature_stats).last_used_at
@@ -198,7 +198,7 @@ defmodule SavvyFlags.Features do
 
     case last_used_at do
       nil -> false
-      last_used_at -> DateTime.diff(DateTime.utc_now(), last_used_at, :minute) > @stale_threshold
+      last_used_at -> DateTime.diff(DateTime.utc_now(), last_used_at, :day) > threshold
     end
   end
 

@@ -5,6 +5,7 @@ defmodule SavvyFlags.Configurations.Configuration do
   schema "configurations" do
     field :mfa_required, :boolean
     field :feature_key_format, :string
+    field :stale_threshold, :integer
 
     timestamps(type: :utc_datetime)
   end
@@ -12,6 +13,6 @@ defmodule SavvyFlags.Configurations.Configuration do
   @doc false
   def changeset(configuration, attrs) do
     configuration
-    |> cast(attrs, [:mfa_required, :feature_key_format])
+    |> cast(attrs, [:mfa_required, :feature_key_format, :stale_threshold])
   end
 end

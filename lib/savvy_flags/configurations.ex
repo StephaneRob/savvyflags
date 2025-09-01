@@ -22,4 +22,10 @@ defmodule SavvyFlags.Configurations do
   def change_configuration(%Configuration{} = configuration, attrs \\ %{}) do
     Configuration.changeset(configuration, attrs)
   end
+
+  @stale_threshold 30
+
+  def stale_threshold do
+    get_configuration().stale_threshold || @stale_threshold
+  end
 end

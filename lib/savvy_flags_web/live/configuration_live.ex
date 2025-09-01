@@ -26,6 +26,12 @@ defmodule SavvyFlagsWeb.ConfigurationLive do
           </p>
         </div>
         <div>
+          <.input field={@form[:stale_threshold]} label="Stale threshold (in days)" type="number" />
+          <p class=" text-xs text-gray-500">
+            Specify the number of days after which a feature is considered stale. ex: <code>30</code>. If not set, the default is 30 days (about 1 month).
+          </p>
+        </div>
+        <div>
           <h2 class="text-xl font-semibold mb-2">Security</h2>
           <.toggle
             label="Enforce MFA for your users"
