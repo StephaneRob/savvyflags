@@ -233,10 +233,7 @@ defmodule SavvyFlags.Features do
 
     case response do
       {:ok, feature_rule} ->
-        spawn(fn ->
-          SavvyFlags.FeatureCache.reset(feature_rule.feature)
-        end)
-
+        SavvyFlags.FeatureCache.reset(feature_rule.feature)
         response
 
       error ->

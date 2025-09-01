@@ -29,7 +29,14 @@ defmodule SavvyFlags.DataCase do
 
   setup tags do
     SavvyFlags.DataCase.setup_sandbox(tags)
-    SavvyFlags.Configurations.init()
+
+    {:ok, configuration} = SavvyFlags.Configurations.init()
+
+    if tags[:configuration] do
+      {:ok, _} =
+        SavvyFlags.Configurations.update_configuration(configuration, tags[:configuration])
+    end
+
     :ok
   end
 
