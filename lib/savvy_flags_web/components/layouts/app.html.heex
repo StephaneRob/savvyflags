@@ -5,7 +5,7 @@
     style={"background-color: #{assigns[:environment].color};"}
   >
     <span class="font-bold">{@environment.name}</span>
-    <span :if={@environment.description}> -   {@environment.description}</span>
+    <span :if={@environment.description}>- {@environment.description}</span>
   </div>
   <.flash_group flash={@flash} />
   <div class="flex min-h-full">
