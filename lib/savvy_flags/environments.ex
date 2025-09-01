@@ -31,7 +31,8 @@ defmodule SavvyFlags.Environments do
   end
 
   def list_environments do
-    Repo.all(Environment)
+    query = from e in Environment, order_by: [asc: e.inserted_at]
+    Repo.all(query)
   end
 
   def get_environment(reference, feature) do

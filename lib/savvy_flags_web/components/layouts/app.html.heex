@@ -1,4 +1,12 @@
 <main class="">
+  <div
+    :if={assigns[:environment]}
+    class="text-xs capitalize italic  w-full px-4 py-1"
+    style={"background-color: #{assigns[:environment].color};"}
+  >
+    <span class="font-bold">{@environment.name}</span>
+    <span :if={@environment.description}> -   {@environment.description}</span>
+  </div>
   <.flash_group flash={@flash} />
   <div class="flex min-h-full">
     <div :if={assigns[:current_user]} class="px-2 min-h-full">

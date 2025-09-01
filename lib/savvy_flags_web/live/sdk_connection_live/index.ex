@@ -40,12 +40,12 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Index do
         {Enum.map(sdk_connection.projects, & &1.name) |> Enum.join(", ")}
       </:col>
       <:col :let={{_, sdk_connection}} label="Environments">
-        {sdk_connection.environment.name}
         <span
-          class="ml-3 h-4 w-4 inline-block rounded-sm"
+          class="mr-2 h-4 w-4 inline-block rounded-sm"
           style={"background-color: #{sdk_connection.environment.color}"}
         >
         </span>
+        <span class="capitalize">{sdk_connection.environment.name}</span>
       </:col>
       <:action :let={{_id, sdk_connection}}>
         <.link patch={~p"/sdk-connections/#{sdk_connection}/edit"}>

@@ -19,12 +19,14 @@ defmodule SavvyFlagsWeb.EnvironmentLive.Index do
     </.breadcrumb>
 
     <.table id="environments" rows={@streams.environments}>
-      <:col :let={{_, environment}} label="Name"><code>{environment.name}</code></:col>
-      <:col :let={{_, environment}} label="Description">{environment.description}</:col>
-      <:col :let={{_, environment}} label="Color">
-        <span class="h-4 w-4 inline-block rounded-sm" style={"background-color: #{environment.color}"}>
-        </span>
+      <:col :let={{_, environment}} label="Name">
+        <span
+          class="h-4 w-4 inline-block rounded-sm mr-2"
+          style={"background-color: #{environment.color}"}
+        >
+        </span> <code>{environment.name}</code>
       </:col>
+      <:col :let={{_, environment}} label="Description">{environment.description}</:col>
       <:action :let={{_id, environment}}>
         <.link patch={~p"/environments/#{environment}/edit"}>
           Edit
