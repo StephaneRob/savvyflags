@@ -19,13 +19,14 @@ defmodule SavvyFlags.SdkConnections.SdkConnectionStats do
     {:stop, reason, state}
   end
 
-  def handle_cast({:stats, %{sdk_connection_id: sdk_connection_id, features: features}}, state) do
-    SdkConnections.incr_requests(sdk_connection_id)
-    Features.touch(features)
+  def handle_cast({:stats, %{sdk_connection: sdk_connection, features: features}}, state) do
+    SdkConnections.incr_requests(sdk_connection.id)
+    Features.touch(features, sdk_connection.environment_id)
     {:noreply, state}
   end
 
   def handle_cast({:stats, _}, state) do
+    Logger.warning("Received stats update with missing data")
     {:noreply, state}
   end
 

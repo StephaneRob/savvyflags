@@ -1,5 +1,7 @@
 defmodule SavvyFlagsWeb.FeatureLive.Components do
   use SavvyFlagsWeb, :html
+  alias SavvyFlags.Features
+  alias SavvyFlags.Features.Feature
 
   attr :feature, :map
 
@@ -24,6 +26,11 @@ defmodule SavvyFlagsWeb.FeatureLive.Components do
       <div>
         <p class="text-sm font-semibold mb-2">
           Default value <.badge value={@feature.default_value.value} />
+        </p>
+      </div>
+      <div>
+        <p class="text-sm font-semibold mb-2">
+          Last used at: <.feature_stats feature={@feature} />
         </p>
       </div>
     </div>
@@ -162,7 +169,6 @@ defmodule SavvyFlagsWeb.FeatureLive.Components do
         </span>
       </:col>
       <:col :let={environment} label="Rules">{length(environment.feature_rules)}</:col>
-      <:col :let={environment} label="Rules">{length(environment.feature_rules)}</:col>
       <:action :let={environment}>
         <form phx-change="toggle-feature-environment" phx-value-id={environment.id}>
           <.toggle
@@ -174,6 +180,31 @@ defmodule SavvyFlagsWeb.FeatureLive.Components do
         </form>
       </:action>
     </.table>
+    """
+  end
+
+  attr :feature, Feature, required: true
+
+  def feature_stats(assigns) do
+    feature_stats = assigns.feature.feature_stats
+
+    assigns =
+      assign_new(assigns, :last_feature_stat, fn ->
+        if Enum.any?(feature_stats) do
+          List.first(feature_stats)
+        end
+      end)
+
+    ~H"""
+    <span :if={@last_feature_stat} class="text-xs">
+      {Timex.from_now(@last_feature_stat.last_used_at, "en")} ({@last_feature_stat.environment.name})
+    </span>
+    <span :if={!@last_feature_stat} class="text-xs italic text-gray-500">Never used</span>
+
+    <%= if Features.stale?(@feature) do %>
+      <br />
+      <.badge value="Stale" variant="warning" size="sm" />
+    <% end %>
     """
   end
 end

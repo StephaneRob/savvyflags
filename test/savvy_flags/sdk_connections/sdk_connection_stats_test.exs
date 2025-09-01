@@ -27,7 +27,7 @@ defmodule SavvyFlags.SdkConnections.SdkConnectionStatsTest do
         environment_id: environment.id
       })
 
-    meta = %{sdk_connection_id: sdk_connection.id, features: [feature.id]}
+    meta = %{sdk_connection: sdk_connection, features: [feature.id]}
 
     SavvyFlags.SdkConnections.SdkConnectionStats.update_stats(meta)
     # allow async cast to complete
@@ -39,9 +39,10 @@ defmodule SavvyFlags.SdkConnections.SdkConnectionStatsTest do
     assert row.count == 1
 
     # feature last_used_at touched
-    f1 = Features.get_feature!(feature.id)
-    assert f1.last_used_at != nil
-
+    f1 = Features.get_feature!(feature.id) |> Repo.preload(feature_stats: :environment)
+    feature_stat = List.first(f1.feature_stats)
+    assert feature_stat.last_used_at != nil
+    assert feature_stat.environment.id == environment.id
     # calling again within the time window increments the same row
     SavvyFlags.SdkConnections.SdkConnectionStats.update_stats(meta)
     Process.sleep(30)

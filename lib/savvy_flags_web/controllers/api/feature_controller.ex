@@ -184,7 +184,7 @@ defmodule SavvyFlagsWeb.Api.FeatureController do
 
   defp stats(conn, _) do
     SavvyFlags.SdkConnections.SdkConnectionStats.update_stats(%{
-      sdk_connection_id: conn.assigns.current_sdk_connection.id,
+      sdk_connection: conn.assigns.current_sdk_connection,
       features: Enum.map(conn.assigns.features, & &1.id)
     })
 

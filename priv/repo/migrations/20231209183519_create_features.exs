@@ -10,13 +10,23 @@ defmodule SavvyFlags.Repo.Migrations.CreateFeatures do
       add :project_id, references(:projects, on_delete: :delete_all)
       add :environments_enabled, {:array, :integer}, default: []
       add :archived_at, :utc_datetime
-      add :last_used_at, :utc_datetime
 
       timestamps(type: :utc_datetime)
     end
 
     create unique_index(:features, [:key])
     create unique_index(:features, [:reference])
+
+    create table(:feature_stats) do
+      add :feature_id, references(:features, on_delete: :delete_all), null: false
+      add :environment_id, references(:environments, on_delete: :delete_all), null: false
+      add :first_used_at, :utc_datetime
+      add :last_used_at, :utc_datetime
+
+      timestamps(type: :utc_datetime)
+    end
+
+    create unique_index(:feature_stats, [:feature_id, :environment_id])
 
     create table(:feature_rules) do
       add :reference, :string, null: false

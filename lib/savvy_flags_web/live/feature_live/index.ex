@@ -5,6 +5,8 @@ defmodule SavvyFlagsWeb.FeatureLive.Index do
   alias SavvyFlags.Accounts.User
   alias SavvyFlags.Features.Feature
 
+  import SavvyFlagsWeb.FeatureLive.Components, only: [feature_stats: 1]
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -83,11 +85,7 @@ defmodule SavvyFlagsWeb.FeatureLive.Index do
         />
       </:col>
       <:col :let={{_, feature}} label="Last used at">
-        <%= if feature.last_used_at do %>
-          {Timex.from_now(feature.last_used_at, "en")}
-        <% else %>
-          Never
-        <% end %>
+        <.feature_stats feature={feature} />
       </:col>
       <:col :let={{_, feature}} label="Last updated at">
         <.datetime value={feature.updated_at} />

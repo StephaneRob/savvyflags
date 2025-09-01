@@ -12,11 +12,11 @@ defmodule SavvyFlags.Features.Feature do
     field :description, :string
     field :environments_enabled, {:array, :integer}, default: []
     field :archived_at, :utc_datetime
-    field :last_used_at, :utc_datetime
     embeds_one :default_value, FeatureValue, on_replace: :delete
     belongs_to :project, SavvyFlags.Projects.Project
     has_many :feature_rules, SavvyFlags.Features.FeatureRule
     has_many :environments, through: [:feature_rules, :environment]
+    has_many :feature_stats, SavvyFlags.Features.FeatureStat, preload_order: [desc: :last_used_at]
     many_to_many :users, SavvyFlags.Accounts.User, join_through: "user_features"
 
     timestamps(type: :utc_datetime)

@@ -203,4 +203,38 @@ defmodule SavvyFlags.FeaturesTest do
       assert Enum.all?(features, &(&1.key in [feature2.key]))
     end
   end
+
+  describe "stale?" do
+    @tag :skip
+    test "returns true if feature is stale", %{projects: [project]} do
+      feature =
+        SavvyFlags.FeaturesFixtures.feature_fixture(%{
+          key: "test",
+          project_id: project.id,
+          default_value: %{
+            value: "false",
+            type: :boolean
+          }
+        })
+
+      feature = %{feature | last_used_at: DateTime.utc_now() |> DateTime.add(-60 * 26, :hour)}
+      assert Features.stale?(feature)
+    end
+
+    @tag :skip
+    test "returns false if feature is not stale", %{projects: [project]} do
+      feature =
+        SavvyFlags.FeaturesFixtures.feature_fixture(%{
+          key: "test",
+          project_id: project.id,
+          default_value: %{
+            value: "false",
+            type: :boolean
+          }
+        })
+
+      feature = %{feature | last_used_at: DateTime.utc_now() |> DateTime.add(-3, :hour)}
+      refute Features.stale?(feature)
+    end
+  end
 end

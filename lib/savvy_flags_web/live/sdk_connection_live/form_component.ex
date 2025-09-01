@@ -53,15 +53,23 @@ defmodule SavvyFlagsWeb.SdkConnection.FormComponent do
   end
 
   @impl true
-  def update(%{sdk_connection: sdk_connection} = assigns, socket) do
-    changeset =
-      SdkConnections.change_sdk_connection(sdk_connection)
-      |> Ecto.Changeset.put_change(:project_ids, Enum.map(sdk_connection.projects, & &1.id))
+  def update(%{sdk_connection: sdk_connection, projects: projects} = assigns, socket) do
+    projects_ids =
+      if sdk_connection.projects == [] do
+        [List.first(projects).id]
+      else
+        Enum.map(sdk_connection.projects, & &1.id)
+      end
 
-    {:ok,
-     socket
-     |> assign(assigns)
-     |> assign_form(changeset)}
+    changeset =
+      sdk_connection
+      |> SdkConnections.change_sdk_connection()
+      |> Ecto.Changeset.put_change(:project_ids, projects_ids)
+
+    socket
+    |> assign(assigns)
+    |> assign_form(changeset)
+    |> ok()
   end
 
   @impl true

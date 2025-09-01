@@ -1,9 +1,11 @@
 defmodule SavvyFlags.Features do
   import Ecto.Query
+  alias SavvyFlags.Features.FeatureStat
   alias SavvyFlags.Accounts
   alias SavvyFlags.Features.FeatureRuleCondition
   alias SavvyFlags.Repo
   alias SavvyFlags.Features.Feature
+  alias SavvyFlags.Features.FeatureStat
   alias SavvyFlags.Features.FeatureRule
 
   def get_feature!(id), do: Repo.get(Feature, id)
@@ -32,7 +34,8 @@ defmodule SavvyFlags.Features do
     query =
       from f in Feature,
         order_by: [desc: f.inserted_at],
-        join: p in assoc(f, :project)
+        join: p in assoc(f, :project),
+        preload: [feature_stats: :environment]
 
     where(query, [f, p], ^filters(filters))
   end
@@ -51,7 +54,8 @@ defmodule SavvyFlags.Features do
         join: p in assoc(f, :project),
         left_join: up in assoc(p, :users),
         order_by: [desc: f.inserted_at],
-        where: u.id == ^user_id or up.id == ^user_id
+        where: u.id == ^user_id or up.id == ^user_id,
+        preload: [feature_stats: :environment]
 
     where(query, [f], ^filters(filters))
   end
@@ -114,7 +118,11 @@ defmodule SavvyFlags.Features do
     query =
       from f in Feature,
         where: f.reference == ^reference,
-        preload: [:environments, feature_rules: [feature_rule_conditions: :attribute]]
+        preload: [
+          :environments,
+          feature_rules: [feature_rule_conditions: :attribute],
+          feature_stats: :environment
+        ]
 
     Repo.one!(query)
   end
@@ -129,22 +137,28 @@ defmodule SavvyFlags.Features do
     Repo.delete(feature)
   end
 
-  def touch(feature_ids) when is_list(feature_ids) do
+  def touch(feature_ids, environment_id) when is_list(feature_ids) do
     now = DateTime.utc_now() |> DateTime.truncate(:second)
 
-    query =
-      from f in Feature,
-        where:
-          f.id in ^feature_ids and (f.last_used_at > ago(15, "minute") or is_nil(f.last_used_at)),
-        update: [set: [last_used_at: ^now]]
+    feature_stats =
+      Enum.map(
+        feature_ids,
+        &%{
+          feature_id: &1,
+          environment_id: environment_id,
+          first_used_at: now,
+          last_used_at: now,
+          inserted_at: now,
+          updated_at: now
+        }
+      )
 
-    Repo.update_all(query, [])
-  end
-
-  def touch(feature) do
-    feature
-    |> Ecto.Changeset.change(%{last_used_at: DateTime.utc_now() |> DateTime.truncate(:second)})
-    |> Repo.update()
+    Repo.insert_all(
+      FeatureStat,
+      feature_stats,
+      conflict_target: [:feature_id, :environment_id],
+      on_conflict: {:replace, [:last_used_at, :updated_at]}
+    )
   end
 
   def update_feature(feature, attrs \\ %{}) do
@@ -171,6 +185,21 @@ defmodule SavvyFlags.Features do
     feature
     |> Ecto.Changeset.change(%{archived_at: DateTime.utc_now() |> DateTime.truncate(:second)})
     |> Repo.update()
+  end
+
+  # TODO: Make it configurable
+  @stale_threshold 60 * 24
+
+  def stale?(feature) do
+    last_used_at =
+      if feature.feature_stats != [] do
+        List.first(feature.feature_stats).last_used_at
+      end
+
+    case last_used_at do
+      nil -> false
+      last_used_at -> DateTime.diff(DateTime.utc_now(), last_used_at, :minute) > @stale_threshold
+    end
   end
 
   def get_feature_rule_by_reference!(reference) do
