@@ -7,6 +7,7 @@ defmodule SavvyFlagsWeb.UI.CopyToClipboard do
   attr :value, :string, required: true
   attr :id, :string, required: true
   attr :class, :string, default: nil
+  slot :inner_block, required: false
 
   def copy_to_clipboard(assigns) do
     ~H"""
@@ -24,7 +25,7 @@ defmodule SavvyFlagsWeb.UI.CopyToClipboard do
       <.icon id={"copy-icon-#{@id}"} name="hero-clipboard" class="h-3 w-3" />
     </button>
     <span id={"copy-#{@id}"} class={[@class]}>
-      {@value}
+      {render_slot(@inner_block) || @value}
     </span>
     """
   end

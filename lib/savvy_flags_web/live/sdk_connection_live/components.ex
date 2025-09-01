@@ -1,15 +1,27 @@
 defmodule SavvyFlagsWeb.SdkConnectionLive.Components do
   use SavvyFlagsWeb, :html
-  alias Contex.Sparkline
+  alias SavvyFlags.SdkConnections.SdkConnection
+
+  attr :data, :list
+  attr :last_24_hours, :integer
+  attr :last_30_days, :integer
 
   def metrics(assigns) do
     ~H"""
     <div class="mt-5">
       <div>
-        <div class="bg-white border border-gray-200 rounded p-3">
+        <div class="bg-white border border-gray-200 rounded p-5">
           <div class="mb-5">
             <h1 class="text-lg font-bold">30 days API usage</h1>
-            {make_plot(@data)}
+            <div id="chart-parent" phx-hook="LiveChart">
+              <div
+                id="chart"
+                class="w-full block"
+                phx-update="ignore"
+              >
+              </div>
+              <div id="data" class="hidden" data-data={Jason.encode!(@data)} />
+            </div>
           </div>
           <div class="flex gap-5">
             <div class="text-center">
@@ -27,26 +39,8 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Components do
     """
   end
 
-  def make_plot(data) do
-    data
-    |> Enum.map(fn
-      # FIXME: use a real chart with x / y axis
-      [_date_str, nil] ->
-        # {date_str, 0}
-        # Enum.random(0..10)
-        0
-
-      [_date_str, count] ->
-        # {date_str, count}
-        count
-        # {date_str, count}
-    end)
-    |> Sparkline.new()
-    |> Map.put(:height, 80)
-    |> Map.put(:width, 700)
-    |> Sparkline.colours("#EEE", "#000")
-    |> Sparkline.draw()
-  end
+  attr :sdk_connection, SdkConnection, required: true
+  attr :plain_rules, :string, required: true
 
   def config(assigns) do
     ~H"""

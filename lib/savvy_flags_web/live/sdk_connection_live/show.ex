@@ -51,7 +51,6 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Show do
       data={@data}
       last_24_hours={@last_24_hours}
       last_30_days={@last_30_days}
-      sdk_connection={@sdk_connection}
     />
 
     <.sandbox
@@ -131,10 +130,11 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Show do
   end
 
   defp add_usage_data(socket) do
-    sdk_connection_id = socket.assigns.sdk_connection.id
-    data_30_days = SdkConnections.generate_series(sdk_connection_id, 30)
-    [[_, last_24_hours]] = SdkConnections.generate_series(sdk_connection_id, 1)
-    last_30_days = Enum.reduce(data_30_days, 0, fn [_, count], acc -> acc + count end)
+    sdk_connection = socket.assigns.sdk_connection
+    data_30_days = SdkConnections.generate_series(sdk_connection.id, 30)
+    [_, global_count] = data_30_days
+    last_24_hours = List.last(global_count)
+    last_30_days = Enum.sum(global_count)
 
     socket
     |> assign(:data, data_30_days)

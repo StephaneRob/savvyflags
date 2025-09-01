@@ -1,6 +1,7 @@
 @import 'tailwindcss' source(none);
 @import 'flatpickr/dist/flatpickr.css';
 @import './selectmultiple';
+@import 'uplot/dist/uPlot.min.css';
 
 @source "../css";
 @source "../js";

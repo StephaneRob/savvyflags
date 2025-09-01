@@ -100,9 +100,6 @@ defmodule SavvyFlags.MixProject do
       # Hash
       {:murmur, "~> 2.0"},
 
-      # chart
-      {:contex, "~> 0.5.0"},
-
       # security
       {:nimble_totp, "~> 1.0"},
       {:qr_code, "~> 3.2.0"},

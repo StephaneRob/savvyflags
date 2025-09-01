@@ -121,5 +121,17 @@ defmodule SavvyFlags.SdkConnections do
 
     Repo.query!(sql, [sdk_connection_id, Enum.max([0, num_days - 1])])
     |> Map.fetch!(:rows)
+    |> prepare_series()
+  end
+
+  defp prepare_series(rows) do
+    Enum.reduce(rows, [[], []], fn [date_str, count], [dates, counts] ->
+      date = DateTime.to_unix(DateTime.new(date_str, ~T[00:00:00], "Etc/UTC") |> elem(1))
+
+      [
+        dates ++ [date],
+        counts ++ [count]
+      ]
+    end)
   end
 end
