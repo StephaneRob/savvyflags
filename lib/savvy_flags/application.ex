@@ -30,7 +30,8 @@ defmodule SavvyFlags.Application do
         {DNSCluster, query: Application.get_env(:savvy_flags, :dns_cluster_query) || :ignore},
         {Phoenix.PubSub, name: SavvyFlags.PubSub},
         {Cachex, name: SavvyFlags.FeatureCache},
-        SavvyFlagsWeb.Endpoint
+        SavvyFlagsWeb.Endpoint,
+        SavvyFlags.RateLimit
       ] ++ @other_children
 
     opts = [strategy: :one_for_one, name: SavvyFlags.Supervisor]

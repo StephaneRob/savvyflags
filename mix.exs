@@ -111,7 +111,10 @@ defmodule SavvyFlags.MixProject do
 
       # Coverage
       {:excoveralls, "~> 0.18", only: :test},
-      {:logger_json, "~> 7.0"}
+      {:logger_json, "~> 7.0"},
+
+      # Rate limiting
+      {:hammer, "~> 7.0"}
     ]
   end
 

@@ -7,6 +7,7 @@ defmodule SavvyFlagsWeb.Api.FeatureController do
   alias SavvyFlags.Features.FeatureEvaluator
 
   plug :fetch_sdk_connection
+  plug :rate_limit_sdk when action in [:create, :index]
   plug :check_sdk_connection_mode when action in [:create, :index]
   plug :load_features when action in [:create, :index]
   plug :stats when action in [:create, :index]
@@ -215,5 +216,27 @@ defmodule SavvyFlagsWeb.Api.FeatureController do
 
   defp sdks_cache_key(feature) do
     "feature:#{feature.reference}:sdks"
+  end
+
+  # TODO: make it configurable per sdk connection?
+  # TODO: add stats of rate limited call?
+  @limit 60
+  @scale :timer.minutes(1)
+
+  defp rate_limit_sdk(conn, _) do
+    sdk_connection = conn.assigns.current_sdk_connection
+    key = "sdk:#{sdk_connection.reference}"
+
+    case SavvyFlags.RateLimit.hit(key, @scale, @limit) do
+      {:allow, _count} ->
+        conn
+
+      {:deny, retry_after} ->
+        conn
+        |> put_resp_header("retry-after", Integer.to_string(div(retry_after, 1000)))
+        |> put_status(:too_many_requests)
+        |> json(%{error: "Rate limit exceeded"})
+        |> halt()
+    end
   end
 end
