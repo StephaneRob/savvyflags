@@ -35,11 +35,11 @@ defmodule SavvyFlags.Environments do
     Repo.all(query)
   end
 
-  def get_environment(reference, feature) do
+  def get_environment(reference, feature_revision) do
     query =
       from e in Environment,
         where: e.reference == ^reference,
-        preload: [feature_rules: ^feature_rules_preload_query(feature)]
+        preload: [feature_rules: ^feature_rules_preload_query(feature_revision)]
 
     Repo.one(query)
   end
@@ -68,10 +68,9 @@ defmodule SavvyFlags.Environments do
     Environment.changeset(environment, attrs)
   end
 
-  defp feature_rules_preload_query(feature) do
+  defp feature_rules_preload_query(feature_revision) do
     from fr in FeatureRule,
-      where: fr.feature_id == ^feature.id,
-      order_by: [asc: :position],
-      preload: [feature_rule_conditions: :attribute]
+      where: fr.feature_revision_id == ^feature_revision.id,
+      order_by: [asc: :position]
   end
 end

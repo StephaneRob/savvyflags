@@ -4,6 +4,7 @@ defmodule SavvyFlagsWeb.FeatureLive.Index do
   alias SavvyFlags.Projects
   alias SavvyFlags.Accounts.User
   alias SavvyFlags.Features.Feature
+  alias SavvyFlags.Features.FeatureRevision
 
   import SavvyFlagsWeb.FeatureLive.Components, only: [feature_stats: 1]
 
@@ -72,10 +73,13 @@ defmodule SavvyFlagsWeb.FeatureLive.Index do
         <br />
         <span class="text-xs font-normal text-neutral-500">{feature.description}</span>
       </:col>
-      <:col :let={{_, feature}} label="Default value">
+      <%!-- <:col :let={{_, feature}} label="Default value">
         {feature.default_value.value}
+      </:col> --%>
+      <%!-- <:col :let={{_, feature}} label="Value type">{feature.default_value.type}</:col> --%>
+      <:col :let={{_, feature}} label="Version">
+        <.badge value={"v#{List.first(feature.feature_revisions).revision_number} - #{List.first(feature.feature_revisions).status}"} />
       </:col>
-      <:col :let={{_, feature}} label="Value type">{feature.default_value.type}</:col>
       <:col :let={{_, feature}} label="Project">{feature.project.name}</:col>
       <:col :let={{_, feature}} label="Sdk cache">
         <.badge
@@ -119,6 +123,7 @@ defmodule SavvyFlagsWeb.FeatureLive.Index do
         action={@live_action}
         feature={@feature}
         projects={@projects}
+        current_user={@current_user}
       />
     </.modal>
     """
@@ -147,7 +152,7 @@ defmodule SavvyFlagsWeb.FeatureLive.Index do
   defp apply_action(socket, :new, _params) do
     socket
     |> assign(:page_title, "New feature")
-    |> assign(:feature, %Feature{})
+    |> assign(:feature, %Feature{feature_revisions: [%FeatureRevision{}]})
   end
 
   defp apply_action(socket, :edit, %{"reference" => reference}) do

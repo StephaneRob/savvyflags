@@ -139,7 +139,7 @@ defmodule SavvyFlagsWeb.FeatureLive.Show do
        when action in [:environment, :fr_new, :fr_edit] do
     feature = socket.assigns.feature
     current_user = socket.assigns.current_user
-    environment = Environments.get_environment(environment, feature)
+    environment = Environments.get_environment(environment, feature.last_feature_revision)
 
     if can?(current_user, environment) do
       socket
@@ -173,11 +173,11 @@ defmodule SavvyFlagsWeb.FeatureLive.Show do
     socket
     |> assign(:page_title, "New rule")
     |> assign(:feature_rule, %FeatureRule{
-      feature_id: feature.id,
+      feature_revision_id: feature.last_feature_revision.id,
       environment_id: environment.id,
-      feature_rule_conditions: [],
+      conditions: [],
       position: position,
-      value: %FeatureValue{type: feature.default_value.type, value: ""}
+      value: %FeatureValue{type: feature.last_feature_revision.value.type, value: ""}
     })
   end
 

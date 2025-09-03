@@ -2,7 +2,6 @@ defmodule SavvyFlags.Features.Feature do
   use Ecto.Schema
   import SavvyFlags.Fields
   import Ecto.Changeset
-  alias SavvyFlags.Features.FeatureValue
   alias SavvyFlags.Features.FormatValidator
 
   @derive {Phoenix.Param, key: :reference}
@@ -12,11 +11,26 @@ defmodule SavvyFlags.Features.Feature do
     field :description, :string
     field :environments_enabled, {:array, :integer}, default: []
     field :archived_at, :utc_datetime
-    embeds_one :default_value, FeatureValue, on_replace: :delete
+
+    # embeds_one :default_value, FeatureValue, on_replace: :delete
+
     belongs_to :project, SavvyFlags.Projects.Project
-    has_many :feature_rules, SavvyFlags.Features.FeatureRule
-    has_many :environments, through: [:feature_rules, :environment]
+
+    # has_many :feature_rules, SavvyFlags.Features.FeatureRule
+    # has_many :environments, through: [:feature_rules, :environment]
     has_many :feature_stats, SavvyFlags.Features.FeatureStat, preload_order: [desc: :last_used_at]
+
+    has_many :feature_revisions, SavvyFlags.Features.FeatureRevision,
+      preload_order: [desc: :revision_number]
+
+    has_one :initial_feature_revision, SavvyFlags.Features.FeatureRevision,
+      where: [revision_number: 1]
+
+    has_one :current_feature_revision, SavvyFlags.Features.FeatureRevision,
+      where: [status: :published]
+
+    has_one :last_feature_revision, SavvyFlags.Features.FeatureRevision
+
     many_to_many :users, SavvyFlags.Accounts.User, join_through: "user_features"
 
     timestamps(type: :utc_datetime)
@@ -25,6 +39,7 @@ defmodule SavvyFlags.Features.Feature do
   def create_changeset(feature, attrs) do
     feature
     |> changeset(attrs)
+    |> cast_assoc(:feature_revisions)
     |> validate_key_format()
   end
 
@@ -38,7 +53,7 @@ defmodule SavvyFlags.Features.Feature do
       :environments_enabled,
       :archived_at
     ])
-    |> cast_embed(:default_value, with: &FeatureValue.changeset/2)
+    # |> cast_embed(:default_value, with: &FeatureValue.changeset/2)
     |> validate_length(:description, max: 150)
     |> validate_required([:key, :project_id])
   end

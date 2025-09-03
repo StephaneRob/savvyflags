@@ -1,49 +1,41 @@
 defmodule SavvyFlags.Features.FeatureEvaluatorTest do
-  alias SavvyFlags.Projects
-  alias SavvyFlags.Attributes
-  alias SavvyFlags.Features
-  alias SavvyFlags.Features.FeatureEvaluator
   use SavvyFlags.DataCase, async: true
-  alias SavvyFlags.Environments
+
+  alias SavvyFlags.Features.FeatureEvaluator
+
+  import SavvyFlags.ProjectsFixtures
+  import SavvyFlags.AttributesFixtures
+  import SavvyFlags.EnvironmentsFixtures
+  import SavvyFlags.AccountsFixtures
+  import SavvyFlags.FeaturesFixtures
 
   setup do
-    user = SavvyFlags.AccountsFixtures.user_fixture()
-    SavvyFlags.AttributesFixtures.attribute_fixture(%{name: "email"})
-    SavvyFlags.EnvironmentsFixtures.environment_fixture()
-    SavvyFlags.ProjectsFixtures.project_fixture()
+    user = user_fixture()
+    attribute = attribute_fixture(%{name: "email"})
+    environment = environment_fixture()
+    project = project_fixture()
 
-    environments = Environments.list_environments()
-    projects = Projects.list_projects()
-    attributes = Attributes.list_attributes()
-
-    %{environments: environments, user: user, projects: projects, attributes: attributes}
+    %{environment: environment, user: user, project: project, attribute: attribute}
   end
 
   describe "eval/2" do
-    setup %{projects: projects, attributes: attributes, environments: environments} do
-      [project] = projects
-
+    setup %{project: project, attribute: attribute, environment: environment, user: user} do
       feature =
-        SavvyFlags.FeaturesFixtures.feature_fixture(%{
+        feature_with_published_revision_fixture(%{
           key: "test",
           project_id: project.id,
-          default_value: %{
-            value: "false",
-            type: :boolean
-          }
+          current_user_id: user.id
         })
 
-      email_attribute = Enum.find(attributes, &(&1.name == "email"))
-
-      Features.create_feature_rule(%{
-        feature_id: feature.id,
+      feature_rule_fixture(%{
+        feature_revision_id: feature.last_feature_revision.id,
         description: "Activate for example users",
         value: %{type: :boolean, value: "true"},
-        environment_id: List.first(environments).id,
-        feature_rule_conditions: [
+        environment_id: environment.id,
+        conditions: [
           %{
             position: 1,
-            attribute_id: email_attribute.id,
+            attribute: attribute.name,
             type: :match_regex,
             value: ".*\.example.co$"
           }
@@ -51,7 +43,7 @@ defmodule SavvyFlags.Features.FeatureEvaluatorTest do
       })
 
       feature =
-        SavvyFlags.Repo.preload(feature, feature_rules: [feature_rule_conditions: :attribute])
+        SavvyFlags.Repo.preload(feature, current_feature_revision: :feature_rules)
 
       %{feature: feature}
     end

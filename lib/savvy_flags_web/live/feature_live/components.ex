@@ -3,7 +3,7 @@ defmodule SavvyFlagsWeb.FeatureLive.Components do
   alias SavvyFlags.Features
   alias SavvyFlags.Features.Feature
 
-  attr :feature, :map
+  attr :feature, Feature, required: true
 
   def feature_detail(assigns) do
     ~H"""
@@ -19,18 +19,24 @@ defmodule SavvyFlagsWeb.FeatureLive.Components do
     <div class="flex gap-6">
       <div>
         <p class="text-sm font-semibold mb-2">
-          Type <.badge value={@feature.default_value.type} />
+          Type <.badge value={@feature.last_feature_revision.value.type} />
         </p>
         <p></p>
       </div>
       <div>
         <p class="text-sm font-semibold mb-2">
-          Default value <.badge value={@feature.default_value.value} />
+          Default value <.badge value={@feature.last_feature_revision.value.value} />
         </p>
       </div>
       <div>
         <p class="text-sm font-semibold mb-2">
           Last used at: <.feature_stats feature={@feature} />
+        </p>
+      </div>
+      <div>
+        <p class="text-sm font-semibold mb-2">
+          Revision:
+          <.badge value={"v#{@feature.last_feature_revision.revision_number} - #{@feature.last_feature_revision.status}"} />
         </p>
       </div>
     </div>

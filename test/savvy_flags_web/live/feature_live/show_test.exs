@@ -18,7 +18,8 @@ defmodule SavvyFlagsWeb.FeatureLive.ShowTest do
 
     feature =
       feature_fixture(%{
-        project_id: List.first(projects).id
+        project_id: List.first(projects).id,
+        current_user_id: user.id
       })
 
     %{conn: conn, user: user, feature: feature, project: project, environment: environment}

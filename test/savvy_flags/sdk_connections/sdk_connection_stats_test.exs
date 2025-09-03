@@ -1,6 +1,7 @@
 defmodule SavvyFlags.SdkConnections.SdkConnectionStatsTest do
   use SavvyFlags.DataCase, async: false
 
+  import SavvyFlags.AccountsFixtures
   import SavvyFlags.ProjectsFixtures
   import SavvyFlags.FeaturesFixtures
   import SavvyFlags.SdkConnectionsFixtures
@@ -16,9 +17,10 @@ defmodule SavvyFlags.SdkConnections.SdkConnectionStatsTest do
   end
 
   test "update_stats increments request counter and touches feature last_used_at" do
+    user = user_fixture()
     environment = environment_fixture()
     project = project_fixture()
-    feature = feature_fixture(%{project_id: project.id})
+    feature = feature_fixture(%{project_id: project.id, current_user_id: user.id})
 
     sdk_connection =
       sdk_connection_fixture(%{

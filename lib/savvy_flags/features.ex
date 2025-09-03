@@ -3,9 +3,9 @@ defmodule SavvyFlags.Features do
   alias SavvyFlags.Features.FeatureStat
   alias SavvyFlags.Accounts
   alias SavvyFlags.Configurations
-  alias SavvyFlags.Features.FeatureRuleCondition
   alias SavvyFlags.Repo
   alias SavvyFlags.Features.Feature
+  alias SavvyFlags.Features.FeatureRevision
   alias SavvyFlags.Features.FeatureStat
   alias SavvyFlags.Features.FeatureRule
 
@@ -31,14 +31,30 @@ defmodule SavvyFlags.Features do
     |> Repo.all()
   end
 
+  def default_feature_preloads do
+    [
+      feature_revisions: :feature_rules,
+      feature_stats: :environment,
+      last_feature_revision: last_feature_revision_query()
+    ]
+  end
+
   defp list_features_query(filters) do
     query =
       from f in Feature,
         order_by: [desc: f.inserted_at],
         join: p in assoc(f, :project),
-        preload: [feature_stats: :environment]
+        join: fr in assoc(f, :feature_revisions),
+        join: ir in assoc(f, :initial_feature_revision),
+        preload: ^default_feature_preloads()
 
-    where(query, [f, p], ^filters(filters))
+    where(query, [f, p, ir], ^filters(filters))
+  end
+
+  defp last_feature_revision_query do
+    from fr in FeatureRevision,
+      order_by: [desc: fr.revision_number],
+      limit: 1
   end
 
   def list_features_for_user(user_id, filters \\ %{}) do
@@ -56,7 +72,7 @@ defmodule SavvyFlags.Features do
         left_join: up in assoc(p, :users),
         order_by: [desc: f.inserted_at],
         where: u.id == ^user_id or up.id == ^user_id,
-        preload: [feature_stats: :environment]
+        preload: ^default_feature_preloads()
 
     where(query, [f], ^filters(filters))
   end
@@ -93,7 +109,7 @@ defmodule SavvyFlags.Features do
   end
 
   defp apply_filter({"value_type", value}, dynamic) when value != "" do
-    dynamic([f], ^dynamic and fragment("default_value ->'type' = ?", ^value))
+    dynamic([f, p, ir], ^dynamic and fragment("? ->'type' = ?", ir.value, ^value))
   end
 
   defp apply_filter(_, dynamic), do: dynamic
@@ -102,15 +118,15 @@ defmodule SavvyFlags.Features do
     feature_rule_query =
       from fr in FeatureRule,
         where: fr.environment_id == ^environment_id and not fr.scheduled,
-        order_by: [asc: :position],
-        preload: [feature_rule_conditions: :attribute]
+        order_by: [asc: :position]
 
     q =
       from f in Feature,
         where: f.project_id in ^project_ids,
         where: is_nil(f.archived_at),
         where: ^environment_id in f.environments_enabled,
-        preload: [feature_rules: ^feature_rule_query]
+        join: cr in assoc(f, :current_feature_revision),
+        preload: [current_feature_revision: [feature_rules: ^feature_rule_query]]
 
     Repo.all(q)
   end
@@ -120,9 +136,9 @@ defmodule SavvyFlags.Features do
       from f in Feature,
         where: f.reference == ^reference,
         preload: [
-          :environments,
-          feature_rules: [feature_rule_conditions: :attribute],
-          feature_stats: :environment
+          feature_revisions: :feature_rules,
+          feature_stats: :environment,
+          last_feature_revision: ^last_feature_revision_query()
         ]
 
     Repo.one!(query)
@@ -130,6 +146,7 @@ defmodule SavvyFlags.Features do
 
   def create_feature(attrs \\ %{}) do
     %Feature{}
+    |> Repo.preload(:feature_revisions)
     |> Feature.create_changeset(attrs)
     |> Repo.insert()
   end
@@ -205,40 +222,20 @@ defmodule SavvyFlags.Features do
   def get_feature_rule_by_reference!(reference) do
     FeatureRule
     |> Repo.get_by!(reference: reference)
-    |> Repo.preload(:feature_rule_conditions)
-  end
-
-  def get_feature_rule_condition_by_reference!(value) when value in ["", nil] do
-    nil
-  end
-
-  def get_feature_rule_condition_by_reference!(reference) do
-    FeatureRuleCondition
-    |> Repo.get_by!(reference: reference)
   end
 
   def create_feature_rule(attrs \\ %{}) do
     %FeatureRule{}
-    |> Repo.preload(:feature_rule_conditions)
     |> FeatureRule.changeset(attrs)
     |> Repo.insert()
   end
 
+  # FIXME handle Cache reset
   def update_feature_rule(feature_rule, attrs \\ %{}) do
-    response =
-      feature_rule
-      |> Repo.preload([:feature_rule_conditions, :feature])
-      |> FeatureRule.changeset(attrs)
-      |> Repo.update()
-
-    case response do
-      {:ok, feature_rule} ->
-        SavvyFlags.FeatureCache.reset(feature_rule.feature)
-        response
-
-      error ->
-        error
-    end
+    feature_rule
+    |> Repo.preload([:feature_revision])
+    |> FeatureRule.changeset(attrs)
+    |> Repo.update()
   end
 
   def change_feature_rule(feature_rule, attrs \\ %{}) do

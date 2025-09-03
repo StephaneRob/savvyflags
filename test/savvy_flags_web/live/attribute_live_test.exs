@@ -12,8 +12,6 @@ defmodule SavvyFlagsWeb.AttributeLiveTest do
       attribute =
         attribute_fixture(%{name: "attropcool"})
 
-      attribute = SavvyFlags.Repo.preload(attribute, :feature_rule_conditions)
-
       %{conn: conn, user: user, attribute: attribute}
     end
 

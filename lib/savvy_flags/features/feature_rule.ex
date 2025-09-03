@@ -1,6 +1,6 @@
 defmodule SavvyFlags.Features.FeatureRule do
   alias SavvyFlags.Features.FeatureValue
-  alias SavvyFlags.Features.FeatureRuleCondition
+  alias SavvyFlags.Features.RuleCondition
   use Ecto.Schema
   import SavvyFlags.Fields
   import Ecto.Changeset
@@ -14,13 +14,11 @@ defmodule SavvyFlags.Features.FeatureRule do
     field :activated_at, :utc_datetime
 
     embeds_one :value, FeatureValue, on_replace: :delete
+    embeds_many :conditions, RuleCondition, on_replace: :delete
+
     prefixed_reference :feature_rule
 
-    has_many :feature_rule_conditions, SavvyFlags.Features.FeatureRuleCondition,
-      preload_order: [asc: :id],
-      on_replace: :delete
-
-    belongs_to :feature, SavvyFlags.Features.Feature
+    belongs_to :feature_revision, SavvyFlags.Features.FeatureRevision
     belongs_to :environment, SavvyFlags.Environments.Environment
 
     timestamps(type: :utc_datetime)
@@ -31,17 +29,17 @@ defmodule SavvyFlags.Features.FeatureRule do
     feature_rule
     |> cast(attrs, [
       :description,
-      :feature_id,
+      :feature_revision_id,
       :environment_id,
       :position,
       :scheduled_at,
       :scheduled
     ])
-    |> cast_assoc(:feature_rule_conditions, with: &FeatureRuleCondition.changeset/2)
+    |> cast_embed(:conditions, with: &RuleCondition.changeset/2)
     |> cast_embed(:value, with: &FeatureValue.changeset/2)
     |> reset_scheduled_at()
     |> validate_length(:description, max: 150)
-    |> validate_required([:value, :feature_id, :environment_id, :description, :position])
+    |> validate_required([:value, :feature_revision_id, :environment_id, :description, :position])
   end
 
   defp reset_scheduled_at(changeset) do
