@@ -10,7 +10,7 @@ defmodule SavvyFlagsWeb.Router.Features do
            FeatureLive.Show,
            :fr_new
 
-      live "/features/:reference/environments/:environment/rules/:feature_rule",
+      live "/features/:reference/environments/:environment/rules/:rule",
            FeatureLive.Show,
            :fr_edit
 
@@ -18,7 +18,7 @@ defmodule SavvyFlagsWeb.Router.Features do
            FeatureLive.Show,
            :environment
 
-      live "/features/:reference/feature_rules/new", FeatureLive.Show, :feature_rule
+      live "/features/:reference/rules/new", FeatureLive.Show, :rule
       live "/features/:reference", FeatureLive.Show, :show
       live "/features", FeatureLive.Index, :index
     end

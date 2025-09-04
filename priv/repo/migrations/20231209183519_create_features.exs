@@ -50,10 +50,7 @@ defmodule SavvyFlags.Repo.Migrations.CreateFeatures do
       add :description, :text
       add :value, :jsonb
       add :conditions, {:array, :map}, default: []
-
-      add :feature_revision_id, references(:feature_revisions, on_delete: :delete_all),
-        null: false
-
+      add :revision_id, references(:feature_revisions, on_delete: :delete_all), null: false
       add :environment_id, references(:environments, on_delete: :delete_all), null: false
 
       timestamps(type: :utc_datetime)

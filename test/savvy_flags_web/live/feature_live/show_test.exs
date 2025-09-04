@@ -66,12 +66,12 @@ defmodule SavvyFlagsWeb.FeatureLive.ShowTest do
     assert_patch(lv, ~p"/features/#{feature}/environments/#{environment}/rules/new")
 
     assert lv
-           |> form("#feature-rule-form", feature_rule: %{description: nil})
+           |> form("#feature-rule-form", rule: %{description: nil})
            |> render_change() =~ "can&#39;t be blank"
 
     assert lv
            |> form("#feature-rule-form",
-             feature_rule: %{description: "My rule", value: %{value: true}}
+             rule: %{description: "My rule", value: %{value: true}}
            )
            |> render_submit()
 

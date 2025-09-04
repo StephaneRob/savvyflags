@@ -22,11 +22,11 @@ defmodule SavvyFlagsWeb.Api.FeatureControllerTest do
         environments_enabled: [environment.id]
       })
 
-    [feature_revision] = feature.feature_revisions
+    [revision] = feature.revisions
 
-    feature_rule_fixture(%{
+    rule_fixture(%{
       description: "Test",
-      feature_revision_id: feature_revision.id,
+      revision_id: revision.id,
       environment_id: environment.id,
       value: %{type: :boolean, value: "true"},
       conditions: [

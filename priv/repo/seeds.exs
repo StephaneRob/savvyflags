@@ -38,12 +38,12 @@ if System.get_env("SEED") do
   #   })
 
   # {:ok, _} =
-  #   Features.create_feature_rule(%{
+  #   Features.create_rule(%{
   #     feature_id: feature.id,
   #     description: "Activate for gmail users",
   #     value: %{type: :boolean, value: "true"},
   #     environment_id: List.first(environments).id,
-  #     feature_rule_conditions: [
+  #     rule_conditions: [
   #       %{
   #         position: 1,
   #         attribute_id: email_attribute.id,
@@ -62,12 +62,12 @@ if System.get_env("SEED") do
   #   })
 
   # {:ok, _} =
-  #   Features.create_feature_rule(%{
+  #   Features.create_rule(%{
   #     feature_id: feature2.id,
   #     description: "Activate for example users",
   #     value: %{type: :string, value: "green"},
   #     environment_id: List.first(environments).id,
-  #     feature_rule_conditions: [
+  #     rule_conditions: [
   #       %{
   #         position: 1,
   #         attribute_id: email_attribute.id,

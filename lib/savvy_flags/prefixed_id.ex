@@ -23,8 +23,8 @@ defmodule SavvyFlags.PrefixedId do
       project: "p",
       sdk_connection: "sdk",
       feature: "f",
-      feature_rule: "fr",
-      feature_rule_condition: "frc"
+      rule: "fr",
+      rule_condition: "frc"
     }
   end
 end

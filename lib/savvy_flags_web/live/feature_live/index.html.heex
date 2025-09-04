@@ -65,7 +65,7 @@
       </:col> --%>
   <%!-- <:col :let={{_, feature}} label="Value type">{feature.default_value.type}</:col> --%>
   <:col :let={{_, feature}} label="Version">
-    <.badge value={"v#{List.first(feature.feature_revisions).revision_number} - #{List.first(feature.feature_revisions).status}"} />
+    <.badge value={"v#{List.first(feature.revisions).revision_number} - #{List.first(feature.revisions).status}"} />
   </:col>
   <:col :let={{_, feature}} label="Project">{feature.project.name}</:col>
   <:col :let={{_, feature}} label="Sdk cache">
@@ -76,7 +76,7 @@
     />
   </:col>
   <:col :let={{_, feature}} label="Last used at">
-    <.feature_stats feature={feature} />
+    <.stats feature={feature} />
   </:col>
   <:col :let={{_, feature}} label="Last updated at">
     <.datetime value={feature.updated_at} />

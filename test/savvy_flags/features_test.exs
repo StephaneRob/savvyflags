@@ -22,7 +22,7 @@ defmodule SavvyFlags.FeaturesTest do
     test "must create feature with valid attributes", %{project: project, user: user} do
       attrs = %{
         key: "test",
-        feature_revisions: [
+        revisions: [
           %{
             value: %{
               value: "false",
@@ -94,8 +94,8 @@ defmodule SavvyFlags.FeaturesTest do
   #   end
 
   #   test "must update feature with valid attributes", %{feature: feature} do
-  #     [feature_revision] = feature.feature_revisions
-  #     assert feature_revision.value.type == :boolean
+  #     [revision] = feature.revisions
+  #     assert revision.value.type == :boolean
 
   #     attrs = %{
   #       value: %{
@@ -121,7 +121,7 @@ defmodule SavvyFlags.FeaturesTest do
   #   end
   # end
 
-  describe "create_feature_rule/1" do
+  describe "create_rule/1" do
     setup %{project: project, user: user} do
       feature =
         feature_fixture(%{
@@ -140,30 +140,30 @@ defmodule SavvyFlags.FeaturesTest do
       attrs = %{
         description: "test feature rule",
         environment_id: environment.id,
-        feature_revision_id: feature.last_feature_revision.id,
+        revision_id: feature.last_revision.id,
         value: %{
           value: "true",
-          type: feature.last_feature_revision.value.type
+          type: feature.last_revision.value.type
         },
         conditions: [
           %{position: 1, attribute: "id", type: :equal, value: "10"}
         ]
       }
 
-      assert {:ok, feature_rule} = SavvyFlags.Features.create_feature_rule(attrs)
-      assert feature_rule.feature_revision_id == feature.last_feature_revision.id
-      assert feature_rule.description == "test feature rule"
-      assert feature_rule.environment_id == environment.id
-      assert feature_rule.value.value == "true"
-      assert feature_rule.value.type == :boolean
-      assert [frc] = feature_rule.conditions
+      assert {:ok, rule} = SavvyFlags.Features.create_rule(attrs)
+      assert rule.revision_id == feature.last_revision.id
+      assert rule.description == "test feature rule"
+      assert rule.environment_id == environment.id
+      assert rule.value.value == "true"
+      assert rule.value.type == :boolean
+      assert [frc] = rule.conditions
       assert frc.type == :equal
       assert frc.value == "10"
       assert frc.attribute == "id"
     end
   end
 
-  describe "update_feature_rule/1" do
+  describe "update_rule/1" do
     setup %{project: project, user: user, environment: environment} do
       feature =
         feature_fixture(%{
@@ -172,25 +172,25 @@ defmodule SavvyFlags.FeaturesTest do
           project_id: project.id
         })
 
-      feature_rule =
-        feature_rule_fixture(%{
+      rule =
+        rule_fixture(%{
           description: "test feature rule",
-          feature_revision_id: feature.last_feature_revision.id,
+          revision_id: feature.last_revision.id,
           environment_id: environment.id,
           value: %{
             value: "true",
-            type: feature.last_feature_revision.value.type
+            type: feature.last_revision.value.type
           },
           conditions: [
             %{position: 1, attribute: "id", type: :equal, value: "10"}
           ]
         })
 
-      %{feature: feature, feature_rule: feature_rule}
+      %{feature: feature, rule: rule}
     end
 
     test "must update feature rule and feature rule condition with valid attrs", %{
-      feature_rule: feature_rule,
+      rule: rule,
       environment: environment
     } do
       attrs = %{
@@ -198,12 +198,12 @@ defmodule SavvyFlags.FeaturesTest do
         conditions: []
       }
 
-      assert {:ok, feature_rule} = SavvyFlags.Features.update_feature_rule(feature_rule, attrs)
-      assert feature_rule.description == "test feature rule update"
-      assert feature_rule.environment_id == environment.id
-      assert feature_rule.value.value == "true"
-      assert feature_rule.value.type == :boolean
-      assert [] = feature_rule.conditions
+      assert {:ok, rule} = SavvyFlags.Features.update_rule(rule, attrs)
+      assert rule.description == "test feature rule update"
+      assert rule.environment_id == environment.id
+      assert rule.value.value == "true"
+      assert rule.value.type == :boolean
+      assert [] = rule.conditions
     end
   end
 
@@ -214,7 +214,7 @@ defmodule SavvyFlags.FeaturesTest do
           current_user_id: user.id,
           key: "test",
           project_id: project.id,
-          feature_revisions: [
+          revisions: [
             %{
               value: %{
                 value: "false",
@@ -230,7 +230,7 @@ defmodule SavvyFlags.FeaturesTest do
         feature_fixture(%{
           key: "test2",
           project_id: project.id,
-          feature_revisions: [
+          revisions: [
             %{
               value: %{
                 value: "red",
@@ -247,7 +247,7 @@ defmodule SavvyFlags.FeaturesTest do
           key: "test3",
           project_id: project.id,
           archived_at: DateTime.utc_now(),
-          feature_revisions: [
+          revisions: [
             %{
               value: %{
                 value: "false",

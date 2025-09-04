@@ -18,6 +18,8 @@ defmodule SavvyFlags.Features.RuleCondition do
     Sample: :sample
   ]
 
+  @mapping Enum.into(@types, [], fn {k, v} -> {v, k} end)
+
   embedded_schema do
     field :attribute, :string
     field :value, :string
@@ -35,6 +37,6 @@ defmodule SavvyFlags.Features.RuleCondition do
   end
 
   def mapping do
-    for {k, v} <- @types, into: [], do: {v, k}
+    @mapping
   end
 end

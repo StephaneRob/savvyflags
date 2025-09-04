@@ -30,8 +30,8 @@ defmodule SavvyFlagsWeb.FeatureLive.FormComponent do
         />
         <.input field={@form[:description]} label="Description" />
         <.input field={@form[:project_id]} label="Project *" options={@form_projects} type="select" />
-        <.inputs_for :let={form_feature_revision} field={@form[:feature_revisions]}>
-          <.inputs_for :let={form_default_value} field={form_feature_revision[:value]}>
+        <.inputs_for :let={form_revision} field={@form[:revisions]}>
+          <.inputs_for :let={form_default_value} field={form_revision[:value]}>
             <.input
               field={form_default_value[:type]}
               label="Value type"
@@ -104,7 +104,7 @@ defmodule SavvyFlagsWeb.FeatureLive.FormComponent do
   defp save_feature(socket, :edit, feature_params) do
     current_user = socket.assigns.current_user
 
-    case Features.FeatureRevisions.update_feature_revision(
+    case Features.Revisions.update_revision(
            socket.assigns.feature,
            current_user,
            feature_params
@@ -146,11 +146,11 @@ defmodule SavvyFlagsWeb.FeatureLive.FormComponent do
   defp notify_parent(msg), do: send(self(), {__MODULE__, msg})
 
   defp prepare_feature_params(params, socket) do
-    feature_revisions_params = params["feature_revisions"] || %{}
+    revisions_params = params["revisions"] || %{}
 
-    feature_revisions_params =
+    revisions_params =
       Enum.reduce(
-        feature_revisions_params,
+        revisions_params,
         %{},
         fn {idx, params}, acc ->
           Map.put(
@@ -166,7 +166,7 @@ defmodule SavvyFlagsWeb.FeatureLive.FormComponent do
 
     Map.merge(params, %{
       "current_user_id" => socket.assigns.current_user.id,
-      "feature_revisions" => feature_revisions_params
+      "revisions" => revisions_params
     })
   end
 end

@@ -1,4 +1,4 @@
-defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleComponent do
+defmodule SavvyFlagsWeb.FeatureLive.RuleComponent do
   use SavvyFlagsWeb, :live_component
 
   alias SavvyFlags.Attributes
@@ -9,7 +9,7 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleComponent do
     ~H"""
     <div class="relative prevent-drag">
       <div class="absolute top-1 right-1">
-        <.link patch={~p"/features/#{@feature}/environments/#{@environment}/rules/#{@feature_rule}"}>
+        <.link patch={~p"/features/#{@feature}/environments/#{@environment}/rules/#{@rule}"}>
           <.icon name="hero-pencil-square" class="h-5 w-5 text-gray-500 hover:text-gray-700" />
         </.link>
         <.button
@@ -24,13 +24,13 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleComponent do
       </div>
 
       <p class="mb-3">
-        <span class="font-semibold">{@feature_rule.description}</span>
-        <span class="text-neutral-500 text-xs">#{@feature_rule.position + 1}</span>
+        <span class="font-semibold">{@rule.description}</span>
+        <span class="text-neutral-500 text-xs">#{@rule.position + 1}</span>
       </p>
       <p class="mb-2 text-sm">
         <span class="font-semibold">Conditions</span>
         <span
-          :if={length(@feature_rule.conditions) == 0}
+          :if={length(@rule.conditions) == 0}
           class="italic mb-3 text-gray-600"
         >
           No rules defined yet
@@ -38,7 +38,7 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleComponent do
       </p>
       <div>
         <div
-          :for={condition <- @feature_rule.conditions}
+          :for={condition <- @rule.conditions}
           class="mb-4 first:before:content-['IF'] not-first:before:content-['AND'] before:font-light before:italic before:mr-2 ml-3 first:ml-7 text-sm"
         >
           <.badge value={condition.attribute} />
@@ -62,18 +62,18 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleComponent do
         </div>
       </div>
       <p class="font-semibold mb-2 text-sm">
-        Forced value <.badge value={@feature_rule.value.value} />
+        Forced value <.badge value={@rule.value.value} />
       </p>
     </div>
     """
   end
 
   @impl true
-  def update(%{feature_rule: feature_rule} = assigns, socket) do
+  def update(%{rule: rule} = assigns, socket) do
     %{feature: feature, environment: environment} = assigns
 
     changeset =
-      Features.change_feature_rule(feature_rule, %{
+      Features.change_rule(rule, %{
         "feature_id" => feature.id,
         "environment_id" => environment.id
       })
@@ -95,15 +95,15 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleComponent do
   end
 
   @impl true
-  def handle_event("validate", %{"feature_rule" => feature_rule_params}, socket) do
-    scheduled = Map.get(feature_rule_params, "scheduled")
+  def handle_event("validate", %{"rule" => rule_params}, socket) do
+    scheduled = Map.get(rule_params, "scheduled")
 
-    feature_rule_params =
-      Map.put(feature_rule_params, "scheduled", if(scheduled == "on", do: true, else: false))
+    rule_params =
+      Map.put(rule_params, "scheduled", if(scheduled == "on", do: true, else: false))
 
     changeset =
-      socket.assigns.feature_rule
-      |> Features.change_feature_rule(feature_rule_params)
+      socket.assigns.rule
+      |> Features.change_rule(rule_params)
       |> Map.put(:action, :validate)
 
     {:noreply, assign_form(socket, changeset)}
@@ -111,17 +111,17 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleComponent do
 
   @impl true
   def handle_event("delete-feature-rule", _, socket) do
-    feature_rule = socket.assigns.feature_rule
+    rule = socket.assigns.rule
     feature = socket.assigns.feature
     current_user = socket.assigns.current_user
 
-    Features.FeatureRevisions.delete_feature_rule_with_revision(
-      feature_rule,
+    Features.Revisions.delete_rule_with_revision(
+      rule,
       feature,
       current_user
     )
 
-    send(self(), {__MODULE__, {:deleted, feature_rule}})
+    send(self(), {__MODULE__, {:deleted, rule}})
     {:noreply, socket}
   end
 end

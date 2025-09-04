@@ -4,9 +4,9 @@ defmodule SavvyFlagsWeb.FeatureLive.Index do
   alias SavvyFlags.Projects
   alias SavvyFlags.Accounts.User
   alias SavvyFlags.Features.Feature
-  alias SavvyFlags.Features.FeatureRevision
+  alias SavvyFlags.Features.Revision
 
-  import SavvyFlagsWeb.FeatureLive.Components, only: [feature_stats: 1]
+  import SavvyFlagsWeb.FeatureLive.Components, only: [stats: 1]
 
   @impl true
   def mount(_params, _session, socket) do
@@ -31,7 +31,7 @@ defmodule SavvyFlagsWeb.FeatureLive.Index do
   defp apply_action(socket, :new, _params) do
     socket
     |> assign(:page_title, "New feature")
-    |> assign(:feature, %Feature{feature_revisions: [%FeatureRevision{}]})
+    |> assign(:feature, %Feature{revisions: [%Revision{}]})
   end
 
   defp apply_action(socket, :edit, %{"reference" => reference}) do
@@ -39,7 +39,7 @@ defmodule SavvyFlagsWeb.FeatureLive.Index do
 
     socket
     |> assign(:page_title, "Edit feature")
-    |> assign(:feature, %{feature | feature_revisions: [feature.last_feature_revision]})
+    |> assign(:feature, %{feature | revisions: [feature.last_revision]})
   end
 
   defp apply_action(socket, :index, _params) do

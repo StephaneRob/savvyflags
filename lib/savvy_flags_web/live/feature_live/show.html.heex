@@ -66,11 +66,11 @@
   on_cancel={JS.patch(~p"/features/#{@feature}/environments/#{@environment}")}
 >
   <.live_component
-    module={SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent}
-    id={@feature_rule.id || :new}
+    module={SavvyFlagsWeb.FeatureLive.RuleFormComponent}
+    id={@rule.id || :new}
     title={@page_title}
     action={@live_action}
-    feature_rule={@feature_rule}
+    rule={@rule}
     environment={@environment}
     feature={@feature}
     current_user={@current_user}

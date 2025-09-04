@@ -1,4 +1,4 @@
-defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
+defmodule SavvyFlagsWeb.FeatureLive.RuleFormComponent do
   alias SavvyFlags.Features.RuleCondition
   use SavvyFlagsWeb, :live_component
 
@@ -30,7 +30,7 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
         <.input
           field={@form[:description]}
           label="Description *"
-          id={"fr_description_#{@feature_rule.reference}"}
+          id={"fr_description_#{@rule.reference}"}
           placeholder="ex: Activate for gmail.com user"
         />
         <.input type="hidden" field={@form[:position]} />
@@ -106,26 +106,26 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
         <.inputs_for :let={fr_value} field={@form[:value]}>
           <.input
             field={fr_value[:type]}
-            value={@feature.last_feature_revision.value.type}
+            value={@feature.last_revision.value.type}
             type="hidden"
             class="h-0"
-            id={"frv_type_#{@feature_rule.reference}"}
+            id={"frv_type_#{@rule.reference}"}
           />
-          <%= if @feature.last_feature_revision.value.type == :boolean do %>
+          <%= if @feature.last_revision.value.type == :boolean do %>
             <div>
               <.label>Forced value</.label>
               <.input
                 field={fr_value[:value]}
                 label="Active?"
                 type="checkbox"
-                id={"frv_value_#{@feature_rule.reference}"}
+                id={"frv_value_#{@rule.reference}"}
               />
             </div>
           <% else %>
             <.input
               field={fr_value[:value]}
               label="Forced value"
-              id={"frv_value_#{@feature_rule.reference}"}
+              id={"frv_value_#{@rule.reference}"}
             />
           <% end %>
         </.inputs_for>
@@ -134,7 +134,7 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
           label="Scheduled rule?"
           checked={@form[:scheduled].value}
           id="fr_scheduled"
-          name="feature_rule[scheduled]"
+          name="rule[scheduled]"
         />
 
         <%= if @form[:scheduled].value in [true, "on"] do %>
@@ -165,11 +165,11 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
   end
 
   @impl true
-  def update(%{feature_rule: feature_rule} = assigns, socket) do
+  def update(%{rule: rule} = assigns, socket) do
     %{feature: feature, environment: environment} = assigns
 
     changeset =
-      Features.change_feature_rule(feature_rule, %{
+      Features.change_rule(rule, %{
         "feature_id" => feature.id,
         "environment_id" => environment.id
       })
@@ -186,15 +186,15 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
   end
 
   @impl true
-  def handle_event("validate", %{"feature_rule" => feature_rule_params}, socket) do
-    scheduled = Map.get(feature_rule_params, "scheduled")
+  def handle_event("validate", %{"rule" => rule_params}, socket) do
+    scheduled = Map.get(rule_params, "scheduled")
 
-    feature_rule_params =
-      Map.put(feature_rule_params, "scheduled", if(scheduled == "on", do: true, else: false))
+    rule_params =
+      Map.put(rule_params, "scheduled", if(scheduled == "on", do: true, else: false))
 
     changeset =
-      socket.assigns.feature_rule
-      |> Features.change_feature_rule(feature_rule_params)
+      socket.assigns.rule
+      |> Features.change_rule(rule_params)
       |> Map.put(:action, :validate)
 
     {:noreply, assign_form(socket, changeset)}
@@ -202,22 +202,22 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
 
   @impl true
   def handle_event("delete-feature-rule", _, socket) do
-    feature_rule = socket.assigns.feature_rule
-    Features.delete_feature_rule(feature_rule)
-    send(self(), {__MODULE__, {:deleted, feature_rule}})
+    rule = socket.assigns.rule
+    Features.delete_rule(rule)
+    send(self(), {__MODULE__, {:deleted, rule}})
     {:noreply, socket}
   end
 
   @impl true
-  def handle_event("save", %{"feature_rule" => feature_rule_params}, socket) do
-    feature_rule = socket.assigns.feature_rule
-    action = if feature_rule.id, do: :edit, else: :new
-    scheduled = Map.get(feature_rule_params, "scheduled")
+  def handle_event("save", %{"rule" => rule_params}, socket) do
+    rule = socket.assigns.rule
+    action = if rule.id, do: :edit, else: :new
+    scheduled = Map.get(rule_params, "scheduled")
 
-    feature_rule_params =
-      Map.put(feature_rule_params, "scheduled", if(scheduled == "on", do: true, else: false))
+    rule_params =
+      Map.put(rule_params, "scheduled", if(scheduled == "on", do: true, else: false))
 
-    save_feature_rule(socket, action, feature_rule_params)
+    save_rule(socket, action, rule_params)
   end
 
   def handle_event("add-line", _, socket) do
@@ -256,19 +256,19 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
     |> noreply()
   end
 
-  defp save_feature_rule(socket, :edit, feature_rule_params) do
+  defp save_rule(socket, :edit, rule_params) do
     feature = socket.assigns.feature
     user = socket.assigns.current_user
-    feature_rule = socket.assigns.feature_rule
+    rule = socket.assigns.rule
 
-    case Features.FeatureRevisions.update_feature_rule_with_revision(
-           feature_rule,
+    case Features.Revisions.update_rule_with_revision(
+           rule,
            feature,
            user,
-           feature_rule_params
+           rule_params
          ) do
-      {:ok, feature_rule} ->
-        send(self(), {__MODULE__, {:saved, feature_rule}})
+      {:ok, rule} ->
+        send(self(), {__MODULE__, {:saved, rule}})
 
         socket
         |> put_flash(:info, "Feature rule updated successfully")
@@ -282,22 +282,22 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
     end
   end
 
-  defp save_feature_rule(socket, :new, feature_rule_params) do
+  defp save_rule(socket, :new, rule_params) do
     %{feature: feature, environment: environment, current_user: current_user} = socket.assigns
 
-    feature_rule_params =
-      Map.merge(feature_rule_params, %{
-        "feature_revision_id" => feature.last_feature_revision.id,
+    rule_params =
+      Map.merge(rule_params, %{
+        "revision_id" => feature.last_revision.id,
         "environment_id" => environment.id
       })
 
-    case Features.FeatureRevisions.create_feature_rule_with_revision(
+    case Features.Revisions.create_rule_with_revision(
            feature,
            current_user,
-           feature_rule_params
+           rule_params
          ) do
-      {:ok, feature_rule} ->
-        send(self(), {__MODULE__, {:saved, feature_rule}})
+      {:ok, rule} ->
+        send(self(), {__MODULE__, {:saved, rule}})
 
         socket
         |> put_flash(:info, "Feature rule created successfully")

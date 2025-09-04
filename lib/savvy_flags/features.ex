@@ -1,13 +1,13 @@
 defmodule SavvyFlags.Features do
   import Ecto.Query
-  alias SavvyFlags.Features.FeatureStat
+  alias SavvyFlags.Features.Stat
   alias SavvyFlags.Accounts
   alias SavvyFlags.Configurations
   alias SavvyFlags.Repo
   alias SavvyFlags.Features.Feature
-  alias SavvyFlags.Features.FeatureRevision
-  alias SavvyFlags.Features.FeatureStat
-  alias SavvyFlags.Features.FeatureRule
+  alias SavvyFlags.Features.Revision
+  alias SavvyFlags.Features.Stat
+  alias SavvyFlags.Features.Rule
 
   def get_feature!(id), do: Repo.get(Feature, id)
 
@@ -33,10 +33,10 @@ defmodule SavvyFlags.Features do
 
   def default_feature_preloads do
     [
-      :current_feature_revision,
-      feature_revisions: :feature_rules,
-      feature_stats: :environment,
-      last_feature_revision: last_feature_revision_query()
+      :current_revision,
+      revisions: :rules,
+      stats: :environment,
+      last_revision: last_revision_query()
     ]
   end
 
@@ -45,17 +45,17 @@ defmodule SavvyFlags.Features do
       from f in Feature,
         order_by: [desc: f.inserted_at],
         join: p in assoc(f, :project),
-        join: fr in assoc(f, :feature_revisions),
-        join: ir in assoc(f, :initial_feature_revision),
+        join: fr in assoc(f, :revisions),
+        join: ir in assoc(f, :initial_revision),
         preload: ^default_feature_preloads()
 
     where(query, [f, p, ir], ^filters(filters))
   end
 
-  defp last_feature_revision_query do
-    from fr in FeatureRevision,
+  defp last_revision_query do
+    from fr in Revision,
       order_by: [desc: fr.revision_number],
-      preload: [feature_rules: :environment],
+      preload: [rules: :environment],
       limit: 1
   end
 
@@ -117,8 +117,8 @@ defmodule SavvyFlags.Features do
   defp apply_filter(_, dynamic), do: dynamic
 
   def list_features_for_projects_and_environments(project_ids, environment_id) do
-    feature_rule_query =
-      from fr in FeatureRule,
+    rule_query =
+      from fr in Rule,
         where: fr.environment_id == ^environment_id and not fr.scheduled,
         order_by: [asc: :position]
 
@@ -127,8 +127,8 @@ defmodule SavvyFlags.Features do
         where: f.project_id in ^project_ids,
         where: is_nil(f.archived_at),
         where: ^environment_id in f.environments_enabled,
-        join: cr in assoc(f, :current_feature_revision),
-        preload: [current_feature_revision: [feature_rules: ^feature_rule_query]]
+        join: cr in assoc(f, :current_revision),
+        preload: [current_revision: [rules: ^rule_query]]
 
     Repo.all(q)
   end
@@ -138,9 +138,9 @@ defmodule SavvyFlags.Features do
       from f in Feature,
         where: f.reference == ^reference,
         preload: [
-          feature_revisions: :feature_rules,
-          feature_stats: :environment,
-          last_feature_revision: ^last_feature_revision_query()
+          revisions: :rules,
+          stats: :environment,
+          last_revision: ^last_revision_query()
         ]
 
     Repo.one!(query)
@@ -148,7 +148,7 @@ defmodule SavvyFlags.Features do
 
   def create_feature(attrs \\ %{}) do
     %Feature{}
-    |> Repo.preload(:feature_revisions)
+    |> Repo.preload(:revisions)
     |> Feature.create_changeset(attrs)
     |> Repo.insert()
   end
@@ -160,7 +160,7 @@ defmodule SavvyFlags.Features do
   def touch(feature_ids, environment_id) when is_list(feature_ids) do
     now = DateTime.utc_now() |> DateTime.truncate(:second)
 
-    feature_stats =
+    stats =
       Enum.map(
         feature_ids,
         &%{
@@ -174,8 +174,8 @@ defmodule SavvyFlags.Features do
       )
 
     Repo.insert_all(
-      FeatureStat,
-      feature_stats,
+      Stat,
+      stats,
       conflict_target: [:feature_id, :environment_id],
       on_conflict: {:replace, [:last_used_at, :updated_at]}
     )
@@ -211,8 +211,8 @@ defmodule SavvyFlags.Features do
     threshold = Configurations.stale_threshold()
 
     last_used_at =
-      if feature.feature_stats != [] do
-        List.first(feature.feature_stats).last_used_at
+      if feature.stats != [] do
+        List.first(feature.stats).last_used_at
       end
 
     case last_used_at do
@@ -221,83 +221,83 @@ defmodule SavvyFlags.Features do
     end
   end
 
-  def get_feature_rule_by_reference!(reference) do
-    FeatureRule
+  def get_rule_by_reference!(reference) do
+    Rule
     |> Repo.get_by!(reference: reference)
   end
 
-  def create_feature_rule(attrs \\ %{}) do
-    %FeatureRule{}
-    |> FeatureRule.changeset(attrs)
+  def create_rule(attrs \\ %{}) do
+    %Rule{}
+    |> Rule.changeset(attrs)
     |> Repo.insert()
   end
 
   # FIXME handle Cache reset
-  def update_feature_rule(feature_rule, attrs \\ %{}) do
-    feature_rule
-    |> Repo.preload([:feature_revision])
-    |> FeatureRule.changeset(attrs)
+  def update_rule(rule, attrs \\ %{}) do
+    rule
+    |> Repo.preload([:revision])
+    |> Rule.changeset(attrs)
     |> Repo.update()
   end
 
-  def change_feature_rule(feature_rule, attrs \\ %{}) do
-    FeatureRule.changeset(feature_rule, attrs)
+  def change_rule(rule, attrs \\ %{}) do
+    Rule.changeset(rule, attrs)
   end
 
-  def delete_feature_rule(feature_rule) do
-    Repo.delete(feature_rule)
+  def delete_rule(rule) do
+    Repo.delete(rule)
   end
 
-  def reorder_feature_rules(features_rules, %{"old" => old, "new" => new, "id" => id})
+  def reorder_rules(features_rules, %{"old" => old, "new" => new, "id" => id})
       when old < new do
-    moved_feature_rule = Enum.find(features_rules, &(&1.id == id || "#{&1.id}" == id))
+    moved_rule = Enum.find(features_rules, &(&1.id == id || "#{&1.id}" == id))
     lower_items = Enum.filter(features_rules, &(&1.position > old && &1.position <= new))
 
     Repo.transaction(fn ->
-      update_feature_rule(moved_feature_rule, %{position: new})
+      update_rule(moved_rule, %{position: new})
 
       Enum.each(lower_items, fn i ->
         position = i.position - 1
-        update_feature_rule(i, %{position: position})
+        update_rule(i, %{position: position})
       end)
     end)
   end
 
-  def reorder_feature_rules(features_rules, %{"old" => old, "new" => new, "id" => id})
+  def reorder_rules(features_rules, %{"old" => old, "new" => new, "id" => id})
       when old > new do
-    moved_feature_rule = Enum.find(features_rules, &(&1.id == id || "#{&1.id}" == id))
+    moved_rule = Enum.find(features_rules, &(&1.id == id || "#{&1.id}" == id))
     lower_items = Enum.filter(features_rules, &(&1.position < old && &1.position >= new))
 
     Repo.transaction(fn ->
-      update_feature_rule(moved_feature_rule, %{position: new})
+      update_rule(moved_rule, %{position: new})
 
       Enum.each(lower_items, fn i ->
         position = i.position + 1
-        update_feature_rule(i, %{position: position})
+        update_rule(i, %{position: position})
       end)
     end)
   end
 
-  def reorder_feature_rules(_, _) do
+  def reorder_rules(_, _) do
   end
 
-  def enable_feature_rules! do
+  def enable_rules! do
     now = DateTime.utc_now()
 
     query =
-      from fr in FeatureRule,
+      from fr in Rule,
         where: fr.scheduled_at < ^now and fr.scheduled
 
     Repo.update_all(query, set: [scheduled: false, scheduled_at: nil, activated_at: now])
   end
 
-  def create_feature_revision(attrs) do
-    %FeatureRevision{}
-    |> FeatureRevision.changeset(attrs)
+  def create_revision(attrs) do
+    %Revision{}
+    |> Revision.changeset(attrs)
     |> Repo.insert()
   end
 
-  def change_feature_revision(feature_revision, attrs \\ %{}) do
-    FeatureRevision.changeset(feature_revision, attrs)
+  def change_revision(revision, attrs \\ %{}) do
+    Revision.changeset(revision, attrs)
   end
 end

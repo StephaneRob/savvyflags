@@ -4,7 +4,7 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Show do
   import SavvyFlagsWeb.SdkConnectionLive.Components
   alias SavvyFlags.Attributes
   alias SavvyFlags.Features
-  alias SavvyFlags.Features.FeatureEvaluator
+  alias SavvyFlags.Features.Evaluator
   alias SavvyFlags.SdkConnections
   alias SavvyFlags.SdkConnections.SdkConnection
 
@@ -75,7 +75,7 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Show do
         sdk_connection.environment_id
       )
 
-    payload = FeatureEvaluator.build_plain_payload(sdk_connection, features, false)
+    payload = Evaluator.build_plain_payload(sdk_connection, features, false)
     plain_rules = Jason.encode!(payload, pretty: true)
 
     socket
@@ -162,7 +162,7 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Show do
 
   defp eval_sdk(socket, %SdkConnection{mode: :remote_evaluated}, payload) do
     features = socket.assigns.features
-    evaluated_feature_flags = FeatureEvaluator.eval(features, payload)
+    evaluated_feature_flags = Evaluator.eval(features, payload)
     evaluation_result = Jason.encode!(evaluated_feature_flags, pretty: true)
 
     socket

@@ -12,24 +12,14 @@ defmodule SavvyFlags.Features.Feature do
     field :environments_enabled, {:array, :integer}, default: []
     field :archived_at, :utc_datetime
 
-    # embeds_one :default_value, FeatureValue, on_replace: :delete
-
     belongs_to :project, SavvyFlags.Projects.Project
 
-    # has_many :feature_rules, SavvyFlags.Features.FeatureRule
-    # has_many :environments, through: [:feature_rules, :environment]
-    has_many :feature_stats, SavvyFlags.Features.FeatureStat, preload_order: [desc: :last_used_at]
+    has_many :stats, SavvyFlags.Features.Stat, preload_order: [desc: :last_used_at]
 
-    has_many :feature_revisions, SavvyFlags.Features.FeatureRevision,
-      preload_order: [desc: :revision_number]
-
-    has_one :initial_feature_revision, SavvyFlags.Features.FeatureRevision,
-      where: [revision_number: 1]
-
-    has_one :current_feature_revision, SavvyFlags.Features.FeatureRevision,
-      where: [status: :published]
-
-    has_one :last_feature_revision, SavvyFlags.Features.FeatureRevision
+    has_many :revisions, SavvyFlags.Features.Revision, preload_order: [desc: :revision_number]
+    has_one :initial_revision, SavvyFlags.Features.Revision, where: [revision_number: 1]
+    has_one :current_revision, SavvyFlags.Features.Revision, where: [status: :published]
+    has_one :last_revision, SavvyFlags.Features.Revision
 
     many_to_many :users, SavvyFlags.Accounts.User, join_through: "user_features"
 
@@ -39,7 +29,7 @@ defmodule SavvyFlags.Features.Feature do
   def create_changeset(feature, attrs) do
     feature
     |> changeset(attrs)
-    |> cast_assoc(:feature_revisions)
+    |> cast_assoc(:revisions)
     |> validate_key_format()
   end
 

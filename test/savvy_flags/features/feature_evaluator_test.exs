@@ -1,7 +1,7 @@
-defmodule SavvyFlags.Features.FeatureEvaluatorTest do
+defmodule SavvyFlags.Features.EvaluatorTest do
   use SavvyFlags.DataCase, async: true
 
-  alias SavvyFlags.Features.FeatureEvaluator
+  alias SavvyFlags.Features.Evaluator
 
   import SavvyFlags.ProjectsFixtures
   import SavvyFlags.AttributesFixtures
@@ -27,8 +27,8 @@ defmodule SavvyFlags.Features.FeatureEvaluatorTest do
           current_user_id: user.id
         })
 
-      feature_rule_fixture(%{
-        feature_revision_id: feature.last_feature_revision.id,
+      rule_fixture(%{
+        revision_id: feature.last_revision.id,
         description: "Activate for example users",
         value: %{type: :boolean, value: "true"},
         environment_id: environment.id,
@@ -43,82 +43,82 @@ defmodule SavvyFlags.Features.FeatureEvaluatorTest do
       })
 
       feature =
-        SavvyFlags.Repo.preload(feature, current_feature_revision: :feature_rules)
+        SavvyFlags.Repo.preload(feature, current_revision: :rules)
 
       %{feature: feature}
     end
 
     test "eval feature", %{feature: feature} do
-      assert result = FeatureEvaluator.eval([feature], %{})
+      assert result = Evaluator.eval([feature], %{})
       assert result == %{"test" => "false"}
     end
   end
 
   describe "compare/2" do
     test "with :match_regex" do
-      assert FeatureEvaluator.compare("stephane@example.co", ".*example\.co$", :match_regex)
-      refute FeatureEvaluator.compare("stephane@gmail.co", ".*example\.co$", :match_regex)
-      assert FeatureEvaluator.compare("stephane@gmail.co", "^stephane.*", :match_regex)
-      refute FeatureEvaluator.compare("robert@gmail.co", "^stephane.*", :match_regex)
+      assert Evaluator.compare("stephane@example.co", ".*example\.co$", :match_regex)
+      refute Evaluator.compare("stephane@gmail.co", ".*example\.co$", :match_regex)
+      assert Evaluator.compare("stephane@gmail.co", "^stephane.*", :match_regex)
+      refute Evaluator.compare("robert@gmail.co", "^stephane.*", :match_regex)
     end
 
     test "with :not_match_regex" do
-      refute FeatureEvaluator.compare("stephane@example.co", ".*example\.co$", :not_match_regex)
-      assert FeatureEvaluator.compare("stephane@gmail.co", ".*example\.co$", :not_match_regex)
-      refute FeatureEvaluator.compare("stephane@gmail.co", "^stephane.*", :not_match_regex)
-      assert FeatureEvaluator.compare("robert@gmail.co", "^stephane.*", :not_match_regex)
+      refute Evaluator.compare("stephane@example.co", ".*example\.co$", :not_match_regex)
+      assert Evaluator.compare("stephane@gmail.co", ".*example\.co$", :not_match_regex)
+      refute Evaluator.compare("stephane@gmail.co", "^stephane.*", :not_match_regex)
+      assert Evaluator.compare("robert@gmail.co", "^stephane.*", :not_match_regex)
     end
 
     test "with :equal" do
-      assert FeatureEvaluator.compare("stephane@example.co", "stephane@example.co", :equal)
-      refute FeatureEvaluator.compare("stephane@gmail.co", "whatever", :equal)
+      assert Evaluator.compare("stephane@example.co", "stephane@example.co", :equal)
+      refute Evaluator.compare("stephane@gmail.co", "whatever", :equal)
     end
 
     test "with :not_equal" do
-      refute FeatureEvaluator.compare("stephane@example.co", "stephane@example.co", :not_equal)
-      assert FeatureEvaluator.compare("stephane@gmail.co", "whatever", :not_equal)
+      refute Evaluator.compare("stephane@example.co", "stephane@example.co", :not_equal)
+      assert Evaluator.compare("stephane@gmail.co", "whatever", :not_equal)
     end
 
     test "with :gt" do
-      assert FeatureEvaluator.compare("10", "8", :gt)
-      refute FeatureEvaluator.compare("10", "10", :gt)
-      refute FeatureEvaluator.compare("10", "20", :gt)
-      refute FeatureEvaluator.compare("", "20", :gt)
-      assert FeatureEvaluator.compare(10, "8", :gt)
+      assert Evaluator.compare("10", "8", :gt)
+      refute Evaluator.compare("10", "10", :gt)
+      refute Evaluator.compare("10", "20", :gt)
+      refute Evaluator.compare("", "20", :gt)
+      assert Evaluator.compare(10, "8", :gt)
     end
 
     test "with :gt_or_equal" do
-      assert FeatureEvaluator.compare("10", "8", :gt_or_equal)
-      assert FeatureEvaluator.compare("10", "10", :gt_or_equal)
-      refute FeatureEvaluator.compare("10", "20", :gt_or_equal)
+      assert Evaluator.compare("10", "8", :gt_or_equal)
+      assert Evaluator.compare("10", "10", :gt_or_equal)
+      refute Evaluator.compare("10", "20", :gt_or_equal)
     end
 
     test "with :lt" do
-      refute FeatureEvaluator.compare("10", "8", :lt)
-      refute FeatureEvaluator.compare("10", "10", :lt)
-      assert FeatureEvaluator.compare("10", "20", :lt)
+      refute Evaluator.compare("10", "8", :lt)
+      refute Evaluator.compare("10", "10", :lt)
+      assert Evaluator.compare("10", "20", :lt)
     end
 
     test "with :lt_or_equal" do
-      refute FeatureEvaluator.compare("10", "8", :lt_or_equal)
-      assert FeatureEvaluator.compare("10", "10", :lt_or_equal)
-      assert FeatureEvaluator.compare("10", "20", :lt_or_equal)
+      refute Evaluator.compare("10", "8", :lt_or_equal)
+      assert Evaluator.compare("10", "10", :lt_or_equal)
+      assert Evaluator.compare("10", "20", :lt_or_equal)
     end
 
     test "with :sample" do
-      refute FeatureEvaluator.compare("stephane", "30", :sample)
-      refute FeatureEvaluator.compare(nil, "30", :sample)
-      assert FeatureEvaluator.compare("Johny", "30", :sample)
+      refute Evaluator.compare("stephane", "30", :sample)
+      refute Evaluator.compare(nil, "30", :sample)
+      assert Evaluator.compare("Johny", "30", :sample)
     end
 
     test "with :in" do
-      assert FeatureEvaluator.compare("stephane", "stephane, john", :in)
-      refute FeatureEvaluator.compare("Johny", "stephane, john", :in)
+      assert Evaluator.compare("stephane", "stephane, john", :in)
+      refute Evaluator.compare("Johny", "stephane, john", :in)
     end
 
     test "with :not_in" do
-      refute FeatureEvaluator.compare("stephane", "stephane, john", :not_in)
-      assert FeatureEvaluator.compare("Johny", "stephane, john", :not_in)
+      refute Evaluator.compare("stephane", "stephane, john", :not_in)
+      assert Evaluator.compare("Johny", "stephane, john", :not_in)
     end
   end
 end

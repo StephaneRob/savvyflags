@@ -8,7 +8,7 @@ defmodule SavvyFlags.FeaturesFixtures do
       attrs
       |> Enum.into(%{
         key: unique_key(),
-        feature_revisions: [
+        revisions: [
           %{
             value: %{
               type: :boolean,
@@ -30,7 +30,7 @@ defmodule SavvyFlags.FeaturesFixtures do
       attrs
       |> Enum.into(%{
         key: unique_key(),
-        feature_revisions: [
+        revisions: [
           %{
             value: %{
               type: :boolean,
@@ -48,12 +48,12 @@ defmodule SavvyFlags.FeaturesFixtures do
     |> Repo.preload(Features.default_feature_preloads())
   end
 
-  def feature_rule_fixture(attrs \\ %{}) do
-    {:ok, feature_rule} =
+  def rule_fixture(attrs \\ %{}) do
+    {:ok, rule} =
       attrs
       |> Enum.into(%{})
-      |> SavvyFlags.Features.create_feature_rule()
+      |> SavvyFlags.Features.create_rule()
 
-    feature_rule
+    rule
   end
 end

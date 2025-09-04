@@ -1,11 +1,11 @@
-defmodule SavvyFlags.Features.FeatureRevisionsTest do
-  alias SavvyFlags.Features.FeatureRule
+defmodule SavvyFlags.Features.RevisionsTest do
+  alias SavvyFlags.Features.Rule
   use SavvyFlags.DataCase, async: true
 
   alias SavvyFlags.Features
   alias SavvyFlags.Features.Feature
-  alias SavvyFlags.Features.FeatureRevision
-  alias SavvyFlags.Features.FeatureRevisions
+  alias SavvyFlags.Features.Revision
+  alias SavvyFlags.Features.Revisions
 
   import SavvyFlags.AccountsFixtures
   import SavvyFlags.FeaturesFixtures
@@ -28,10 +28,10 @@ defmodule SavvyFlags.Features.FeatureRevisionsTest do
       feature =
         feature_fixture(project_id: project.id, current_user_id: user.id)
 
-      assert {:ok, %{publish_revision: feature_revision}} =
-               FeatureRevisions.publish_revision(feature.last_feature_revision)
+      assert {:ok, %{publish_revision: revision}} =
+               Revisions.publish_revision(feature.last_revision)
 
-      assert feature_revision.status == :published
+      assert revision.status == :published
     end
 
     test "must do nothing if already published", %{
@@ -41,13 +41,13 @@ defmodule SavvyFlags.Features.FeatureRevisionsTest do
       feature =
         feature_with_published_revision_fixture(project_id: project.id, current_user_id: user.id)
 
-      assert {:ok, %{publish_revision: feature_revision}} =
-               FeatureRevisions.publish_revision(feature.last_feature_revision)
+      assert {:ok, %{publish_revision: revision}} =
+               Revisions.publish_revision(feature.last_revision)
 
-      assert feature_revision.status == :published
-      assert feature_revision.id == feature.current_feature_revision.id
-      assert feature_revision.revision_number == feature.current_feature_revision.revision_number
-      assert feature_revision.updated_at == feature.current_feature_revision.updated_at
+      assert revision.status == :published
+      assert revision.id == feature.current_revision.id
+      assert revision.revision_number == feature.current_revision.revision_number
+      assert revision.updated_at == feature.current_revision.updated_at
     end
   end
 
@@ -60,13 +60,13 @@ defmodule SavvyFlags.Features.FeatureRevisionsTest do
       feature =
         feature_with_published_revision_fixture(project_id: project.id, current_user_id: user.id)
 
-      feature_rule_fixture(%{
+      rule_fixture(%{
         description: "test feature rule",
-        feature_revision_id: feature.last_feature_revision.id,
+        revision_id: feature.last_revision.id,
         environment_id: environment.id,
         value: %{
           value: "true",
-          type: feature.last_feature_revision.value.type
+          type: feature.last_revision.value.type
         },
         conditions: [
           %{attribute: "id", type: :equal, value: "10"}
@@ -80,8 +80,8 @@ defmodule SavvyFlags.Features.FeatureRevisionsTest do
           force: true
         )
 
-      assert {:ok, %{feature_revision_updated: feature_revision_updated}} =
-               FeatureRevisions.update_feature_revision(feature, user, %{
+      assert {:ok, %{revision_updated: revision_updated}} =
+               Revisions.update_revision(feature, user, %{
                  current_user_id: user.id,
                  value: %{
                    type: :boolean,
@@ -89,13 +89,13 @@ defmodule SavvyFlags.Features.FeatureRevisionsTest do
                  }
                })
 
-      assert feature_revision_updated.revision_number == 2
-      assert feature_revision_updated.status == :draft
-      assert feature_revision_updated.value.value == "false"
+      assert revision_updated.revision_number == 2
+      assert revision_updated.status == :draft
+      assert revision_updated.value.value == "false"
     end
   end
 
-  describe "create_feature_rule_with_revision/1" do
+  describe "create_rule_with_revision/1" do
     test "must create revision w/ feature rule create a new feature rule", %{
       environment: environment,
       project: project,
@@ -104,14 +104,14 @@ defmodule SavvyFlags.Features.FeatureRevisionsTest do
       feature =
         feature_with_published_revision_fixture(project_id: project.id, current_user_id: user.id)
 
-      feature_rule =
-        feature_rule_fixture(%{
+      rule =
+        rule_fixture(%{
           description: "test feature rule",
-          feature_revision_id: feature.last_feature_revision.id,
+          revision_id: feature.last_revision.id,
           environment_id: environment.id,
           value: %{
             value: "true",
-            type: feature.last_feature_revision.value.type
+            type: feature.last_revision.value.type
           },
           conditions: [
             %{attribute: "id", type: :equal, value: "10"}
@@ -125,16 +125,16 @@ defmodule SavvyFlags.Features.FeatureRevisionsTest do
           force: true
         )
 
-      assert SavvyFlags.Repo.aggregate(FeatureRevision, :count, :id) == 1
+      assert SavvyFlags.Repo.aggregate(Revision, :count, :id) == 1
 
       assert {:ok,
               %{
                 feature: feature,
-                feature_revision: feature_revision,
-                feature_rule: new_feature_rule,
-                feature_rules_revision: feature_rules_revision
+                revision: revision,
+                rule: new_rule,
+                rules_revision: rules_revision
               }} =
-               FeatureRevisions.create_feature_rule_with_revision(feature, user, %{
+               Revisions.create_rule_with_revision(feature, user, %{
                  "description" => "new rule",
                  "environment_id" => environment.id,
                  "value" => %{
@@ -150,15 +150,15 @@ defmodule SavvyFlags.Features.FeatureRevisionsTest do
                  ]
                })
 
-      assert SavvyFlags.Repo.aggregate(FeatureRevision, :count, :id) == 2
-      assert SavvyFlags.Repo.aggregate(FeatureRule, :count, :id) == 3
-      assert %FeatureRule{} = Map.get(feature_rules_revision, feature_rule.id)
-      assert new_feature_rule.feature_revision_id == feature_revision.id
-      assert new_feature_rule.description == "new rule"
-      feature_revision = SavvyFlags.Repo.preload(feature_revision, :feature_rules)
-      assert feature_revision.feature_rules |> Enum.count() == 2
-      assert feature_revision.revision_number == 2
-      assert feature_revision.id != feature.current_feature_revision.id
+      assert SavvyFlags.Repo.aggregate(Revision, :count, :id) == 2
+      assert SavvyFlags.Repo.aggregate(Rule, :count, :id) == 3
+      assert %Rule{} = Map.get(rules_revision, rule.id)
+      assert new_rule.revision_id == revision.id
+      assert new_rule.description == "new rule"
+      revision = SavvyFlags.Repo.preload(revision, :rules)
+      assert revision.rules |> Enum.count() == 2
+      assert revision.revision_number == 2
+      assert revision.id != feature.current_revision.id
     end
 
     test "if feature draft must create feature rule w/o revision", %{
@@ -168,13 +168,13 @@ defmodule SavvyFlags.Features.FeatureRevisionsTest do
     } do
       feature = feature_fixture(project_id: project.id, current_user_id: user.id)
 
-      feature_rule_fixture(%{
+      rule_fixture(%{
         description: "test feature rule",
-        feature_revision_id: feature.last_feature_revision.id,
+        revision_id: feature.last_revision.id,
         environment_id: environment.id,
         value: %{
           value: "true",
-          type: feature.last_feature_revision.value.type
+          type: feature.last_revision.value.type
         },
         conditions: [
           %{attribute: "id", type: :equal, value: "10"}
@@ -189,16 +189,16 @@ defmodule SavvyFlags.Features.FeatureRevisionsTest do
         )
 
       assert SavvyFlags.Repo.aggregate(Feature, :count, :id) == 1
-      assert SavvyFlags.Repo.aggregate(FeatureRule, :count, :id) == 1
+      assert SavvyFlags.Repo.aggregate(Rule, :count, :id) == 1
 
       assert {:ok,
               %{
                 feature: _,
-                feature_revision: nil,
-                feature_rules_revision: nil,
-                feature_rule: new_feature_rule
+                revision: nil,
+                rules_revision: nil,
+                rule: new_rule
               }} =
-               FeatureRevisions.create_feature_rule_with_revision(feature, user, %{
+               Revisions.create_rule_with_revision(feature, user, %{
                  "description" => "new rule",
                  "environment_id" => environment.id,
                  "value" => %{
@@ -214,12 +214,12 @@ defmodule SavvyFlags.Features.FeatureRevisionsTest do
                  ]
                })
 
-      assert SavvyFlags.Repo.aggregate(FeatureRule, :count, :id) == 2
-      assert new_feature_rule.feature_revision_id == feature.last_feature_revision.id
+      assert SavvyFlags.Repo.aggregate(Rule, :count, :id) == 2
+      assert new_rule.revision_id == feature.last_revision.id
     end
   end
 
-  describe "update_feature_rule_with_revision/1" do
+  describe "update_rule_with_revision/1" do
     test "must create revision w/ feature rule edit the corresponding feature rule", %{
       environment: environment,
       project: project,
@@ -228,14 +228,14 @@ defmodule SavvyFlags.Features.FeatureRevisionsTest do
       feature =
         feature_with_published_revision_fixture(project_id: project.id, current_user_id: user.id)
 
-      feature_rule =
-        feature_rule_fixture(%{
+      rule =
+        rule_fixture(%{
           description: "test feature rule",
-          feature_revision_id: feature.last_feature_revision.id,
+          revision_id: feature.last_revision.id,
           environment_id: environment.id,
           value: %{
             value: "true",
-            type: feature.last_feature_revision.value.type
+            type: feature.last_revision.value.type
           },
           conditions: [
             %{attribute: "id", type: :equal, value: "10"}
@@ -249,16 +249,16 @@ defmodule SavvyFlags.Features.FeatureRevisionsTest do
           force: true
         )
 
-      assert SavvyFlags.Repo.aggregate(FeatureRevision, :count, :id) == 1
+      assert SavvyFlags.Repo.aggregate(Revision, :count, :id) == 1
 
       assert {:ok,
               %{
                 feature: feature,
-                feature_revision: feature_revision,
-                feature_rule: new_feature_rule,
-                feature_rules_revision: feature_rules_revision
+                revision: revision,
+                rule: new_rule,
+                rules_revision: rules_revision
               }} =
-               FeatureRevisions.update_feature_rule_with_revision(feature_rule, feature, user, %{
+               Revisions.update_rule_with_revision(rule, feature, user, %{
                  "description" => "new rule",
                  "environment_id" => environment.id,
                  "value" => %{
@@ -274,15 +274,15 @@ defmodule SavvyFlags.Features.FeatureRevisionsTest do
                  ]
                })
 
-      assert SavvyFlags.Repo.aggregate(FeatureRevision, :count, :id) == 2
-      assert SavvyFlags.Repo.aggregate(FeatureRule, :count, :id) == 2
-      assert %FeatureRule{} = Map.get(feature_rules_revision, feature_rule.id)
-      assert new_feature_rule.feature_revision_id == feature_revision.id
-      assert new_feature_rule.description == "new rule"
-      feature_revision = SavvyFlags.Repo.preload(feature_revision, :feature_rules)
-      assert feature_revision.feature_rules |> Enum.count() == 1
-      assert feature_revision.revision_number == 2
-      assert feature_revision.id != feature.current_feature_revision.id
+      assert SavvyFlags.Repo.aggregate(Revision, :count, :id) == 2
+      assert SavvyFlags.Repo.aggregate(Rule, :count, :id) == 2
+      assert %Rule{} = Map.get(rules_revision, rule.id)
+      assert new_rule.revision_id == revision.id
+      assert new_rule.description == "new rule"
+      revision = SavvyFlags.Repo.preload(revision, :rules)
+      assert revision.rules |> Enum.count() == 1
+      assert revision.revision_number == 2
+      assert revision.id != feature.current_revision.id
     end
 
     test "if feature draft must edit feature rule w/o revision", %{
@@ -292,14 +292,14 @@ defmodule SavvyFlags.Features.FeatureRevisionsTest do
     } do
       feature = feature_fixture(project_id: project.id, current_user_id: user.id)
 
-      feature_rule =
-        feature_rule_fixture(%{
+      rule =
+        rule_fixture(%{
           description: "test feature rule",
-          feature_revision_id: feature.last_feature_revision.id,
+          revision_id: feature.last_revision.id,
           environment_id: environment.id,
           value: %{
             value: "true",
-            type: feature.last_feature_revision.value.type
+            type: feature.last_revision.value.type
           },
           conditions: [
             %{attribute: "id", type: :equal, value: "10"}
@@ -314,16 +314,16 @@ defmodule SavvyFlags.Features.FeatureRevisionsTest do
         )
 
       assert SavvyFlags.Repo.aggregate(Feature, :count, :id) == 1
-      assert SavvyFlags.Repo.aggregate(FeatureRule, :count, :id) == 1
+      assert SavvyFlags.Repo.aggregate(Rule, :count, :id) == 1
 
       assert {:ok,
               %{
                 feature: _,
-                feature_revision: nil,
-                feature_rules_revision: nil,
-                feature_rule: new_feature_rule
+                revision: nil,
+                rules_revision: nil,
+                rule: new_rule
               }} =
-               FeatureRevisions.update_feature_rule_with_revision(feature_rule, feature, user, %{
+               Revisions.update_rule_with_revision(rule, feature, user, %{
                  "description" => "new rule",
                  "environment_id" => environment.id,
                  "value" => %{
@@ -339,8 +339,8 @@ defmodule SavvyFlags.Features.FeatureRevisionsTest do
                  ]
                })
 
-      assert SavvyFlags.Repo.aggregate(FeatureRule, :count, :id) == 1
-      assert new_feature_rule.feature_revision_id == feature.last_feature_revision.id
+      assert SavvyFlags.Repo.aggregate(Rule, :count, :id) == 1
+      assert new_rule.revision_id == feature.last_revision.id
     end
   end
 end

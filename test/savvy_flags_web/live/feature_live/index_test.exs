@@ -73,7 +73,7 @@ defmodule SavvyFlagsWeb.FeatureLive.IndexTest do
              |> form("#feature-form",
                feature: %{
                  key: "test:1",
-                 feature_revisions: %{0 => %{value: %{type: "string", value: "green"}}}
+                 revisions: %{0 => %{value: %{type: "string", value: "green"}}}
                }
              )
              |> render_submit()

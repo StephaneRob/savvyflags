@@ -1,4 +1,4 @@
-defmodule SavvyFlags.FeatureRulesActivator do
+defmodule SavvyFlags.RulesActivator do
   use GenServer
   require Logger
   alias SavvyFlags.Features
@@ -14,7 +14,7 @@ defmodule SavvyFlags.FeatureRulesActivator do
   end
 
   def handle_info(:activate, state) do
-    {count, _} = Features.enable_feature_rules!()
+    {count, _} = Features.enable_rules!()
     Logger.info("#{count} activated feature rule(s).")
     schedule()
     {:noreply, state}
