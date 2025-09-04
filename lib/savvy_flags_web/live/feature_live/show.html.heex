@@ -1,0 +1,79 @@
+<.breadcrumb>
+  <:items><.link navigate={~p"/features"}>Features</.link></:items>
+  <:items :if={!@environment}><.badge value={@feature.key} /></:items>
+  <:items :if={@environment}>
+    <.link :if={@environment} patch={~p"/features/#{@feature}"}>
+      <.badge value={@feature.key} />
+    </.link>
+  </:items>
+  <:items :if={@environment}>
+    <span
+      class=" h-3 w-3 inline-block rounded-sm"
+      style={"background-color: #{@environment.color}"}
+    >
+    </span>
+    <span class="capitalize">{@environment.name}</span>
+    <.tag :if={@environment.id in @feature.environments_enabled} variant="success" class="ml-3">
+      Active
+    </.tag>
+    <.tag
+      :if={@environment.id not in @feature.environments_enabled}
+      variant="neutral"
+      class="ml-3"
+    >
+      Inactive
+    </.tag>
+  </:items>
+  <:actions :if={@environment}>
+    <form
+      phx-change="toggle-feature-environment"
+      phx-value-id={@environment.id}
+      class="inline-block ml-auto"
+    >
+      <.toggle
+        label="Enabled?"
+        checked={@environment.id in @feature.environments_enabled}
+        id={"feature_environments_#{@environment.name}"}
+        name={"feature_environments_#{@environment.id}"}
+      />
+    </form>
+  </:actions>
+  <:subtitle></:subtitle>
+</.breadcrumb>
+
+<div class=" mb-6 -mt-2">
+  <.feature_detail feature={@feature} />
+</div>
+
+<div class="flex-1">
+  <div class="mt-4">
+    <.feature_environment_detail
+      :if={@environment}
+      feature={@feature}
+      environment={@environment}
+      current_user={@current_user}
+    />
+  </div>
+  <div class="-mt-4">
+    <.feature_environments :if={!@environment} feature={@feature} environments={@environments} />
+  </div>
+</div>
+
+<.modal
+  :if={@live_action in [:fr_new, :fr_edit]}
+  id="fr-modal"
+  show
+  on_cancel={JS.patch(~p"/features/#{@feature}/environments/#{@environment}")}
+>
+  <.live_component
+    module={SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent}
+    id={@feature_rule.id || :new}
+    title={@page_title}
+    action={@live_action}
+    feature_rule={@feature_rule}
+    environment={@environment}
+    feature={@feature}
+    current_user={@current_user}
+    patch={~p"/features/#{@feature}/environments/#{@environment}"}
+  />
+</.modal>

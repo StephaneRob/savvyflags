@@ -257,9 +257,16 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
   end
 
   defp save_feature_rule(socket, :edit, feature_rule_params) do
+    feature = socket.assigns.feature
+    user = socket.assigns.current_user
     feature_rule = socket.assigns.feature_rule
 
-    case Features.update_feature_rule(feature_rule, feature_rule_params) do
+    case Features.FeatureRevisions.update_feature_rule_with_revision(
+           feature_rule,
+           feature,
+           user,
+           feature_rule_params
+         ) do
       {:ok, feature_rule} ->
         send(self(), {__MODULE__, {:saved, feature_rule}})
 
@@ -276,7 +283,7 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
   end
 
   defp save_feature_rule(socket, :new, feature_rule_params) do
-    %{feature: feature, environment: environment} = socket.assigns
+    %{feature: feature, environment: environment, current_user: current_user} = socket.assigns
 
     feature_rule_params =
       Map.merge(feature_rule_params, %{
@@ -284,7 +291,11 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
         "environment_id" => environment.id
       })
 
-    case Features.create_feature_rule(feature_rule_params) do
+    case Features.FeatureRevisions.create_feature_rule_with_revision(
+           feature,
+           current_user,
+           feature_rule_params
+         ) do
       {:ok, feature_rule} ->
         send(self(), {__MODULE__, {:saved, feature_rule}})
 

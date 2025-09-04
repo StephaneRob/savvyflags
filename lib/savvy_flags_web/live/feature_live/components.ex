@@ -7,37 +7,92 @@ defmodule SavvyFlagsWeb.FeatureLive.Components do
 
   def feature_detail(assigns) do
     ~H"""
-    <p class="mb-2">
-      <span class="not-italic font-bold text-black">Description:</span>
-      <span :if={@feature.description not in [nil, ""]} class="text-sm ">
-        {@feature.description}
-      </span>
-      <span :if={@feature.description in [nil, ""]} class="text-sm italic text-gray-700 font-normal">
-        No description provided
-      </span>
-    </p>
-    <div class="flex gap-6">
+    <div class="flex justify-between">
       <div>
-        <p class="text-sm font-semibold mb-2">
-          Type <.badge value={@feature.last_feature_revision.value.type} />
+        <p class="mb-2">
+          <span class="not-italic font-bold text-black">Description:</span>
+          <span :if={@feature.description not in [nil, ""]} class="text-sm ">
+            {@feature.description}
+          </span>
+          <span
+            :if={@feature.description in [nil, ""]}
+            class="text-sm italic text-gray-700 font-normal"
+          >
+            No description provided
+          </span>
         </p>
-        <p></p>
+        <div class="flex gap-6">
+          <div>
+            <p class="text-sm font-semibold mb-2">
+              Type <.badge value={@feature.last_feature_revision.value.type} />
+            </p>
+            <p></p>
+          </div>
+          <div>
+            <p class="text-sm font-semibold mb-2">
+              Default value <.badge value={@feature.last_feature_revision.value.value} />
+            </p>
+          </div>
+          <div>
+            <p class="text-sm font-semibold mb-2">
+              Last used at: <.feature_stats feature={@feature} />
+            </p>
+          </div>
+          <div>
+            <p class="text-sm font-semibold mb-2">
+              Revision: <.badge value={"v#{@feature.last_feature_revision.revision_number}"} />
+              <.badge
+                :if={@feature.last_feature_revision.status == :draft}
+                value={"#{@feature.last_feature_revision.status}"}
+                variant="warning"
+              />
+              <.badge
+                :if={@feature.last_feature_revision.status == :published}
+                value={"#{@feature.last_feature_revision.status}"}
+                variant="success"
+              />
+            </p>
+          </div>
+        </div>
       </div>
       <div>
-        <p class="text-sm font-semibold mb-2">
-          Default value <.badge value={@feature.last_feature_revision.value.value} />
-        </p>
-      </div>
-      <div>
-        <p class="text-sm font-semibold mb-2">
-          Last used at: <.feature_stats feature={@feature} />
-        </p>
-      </div>
-      <div>
-        <p class="text-sm font-semibold mb-2">
-          Revision:
-          <.badge value={"v#{@feature.last_feature_revision.revision_number} - #{@feature.last_feature_revision.status}"} />
-        </p>
+        <%= if @feature.last_feature_revision.status == :draft do %>
+          <.button variant="primary" phx-click="publish-revision">Publish</.button>
+          <.button
+            :if={@feature.last_feature_revision.revision_number > 1}
+            variant="warning"
+            phx-click="discard-revision"
+          >
+            Discard
+          </.button>
+        <% else %>
+          <ul>
+            <li :for={revision <- @feature.feature_revisions}>
+              <.badge value={"v#{revision.revision_number}"} variant="code" />
+              <.badge
+                :if={revision.status == :draft}
+                value={"#{revision.status}"}
+                variant="warning"
+              />
+              <.badge
+                :if={revision.status == :unpublished}
+                value={"#{revision.status}"}
+              />
+              <.badge
+                :if={revision.status == :published}
+                value={"#{revision.status}"}
+                variant="success"
+              />
+              <.button
+                :if={revision.status != :published}
+                phx-click="rollback"
+                phx-value-revision-number={revision.revision_number}
+              >
+                Rollback to
+              </.button>
+            </li>
+          </ul>
+        <% end %>
       </div>
     </div>
     """
@@ -45,16 +100,18 @@ defmodule SavvyFlagsWeb.FeatureLive.Components do
 
   attr :feature, :map
   attr :environment, :map
+  attr :current_user, :map
 
   def feature_environment_detail(assigns) do
     ~H"""
-    <.list_feature_rules feature={@feature} environment={@environment} />
+    <.list_feature_rules feature={@feature} environment={@environment} current_user={@current_user} />
     """
   end
 
   attr :feature, :map
   attr :feature_rules, :list
   attr :environment, :map
+  attr :current_user, :map
 
   def list_feature_rules(assigns) do
     ~H"""
@@ -71,7 +128,12 @@ defmodule SavvyFlagsWeb.FeatureLive.Components do
       </div>
       <div phx-hook="Sortable" id="frc-list">
         <%= for feature_rule <- @environment.feature_rules do %>
-          <.feature_rule feature={@feature} feature_rule={feature_rule} environment={@environment} />
+          <.feature_rule
+            feature={@feature}
+            feature_rule={feature_rule}
+            environment={@environment}
+            current_user={@current_user}
+          />
         <% end %>
       </div>
     </div>
@@ -88,6 +150,7 @@ defmodule SavvyFlagsWeb.FeatureLive.Components do
   attr :feature, :map
   attr :feature_rule, :map
   attr :environment, :map
+  attr :current_user, :map
 
   def feature_rule(assigns) do
     scheduled_class = if(assigns[:feature_rule].scheduled, do: "opacity-50")
@@ -109,6 +172,7 @@ defmodule SavvyFlagsWeb.FeatureLive.Components do
             id={@feature_rule.reference || :new}
             feature_rule={@feature_rule}
             feature={@feature}
+            current_user={@current_user}
             environment={@environment}
           />
         </div>

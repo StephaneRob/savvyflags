@@ -112,7 +112,15 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleComponent do
   @impl true
   def handle_event("delete-feature-rule", _, socket) do
     feature_rule = socket.assigns.feature_rule
-    Features.delete_feature_rule(feature_rule)
+    feature = socket.assigns.feature
+    current_user = socket.assigns.current_user
+
+    Features.FeatureRevisions.delete_feature_rule_with_revision(
+      feature_rule,
+      feature,
+      current_user
+    )
+
     send(self(), {__MODULE__, {:deleted, feature_rule}})
     {:noreply, socket}
   end

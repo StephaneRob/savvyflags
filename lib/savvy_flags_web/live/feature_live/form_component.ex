@@ -102,7 +102,13 @@ defmodule SavvyFlagsWeb.FeatureLive.FormComponent do
   end
 
   defp save_feature(socket, :edit, feature_params) do
-    case Features.update_feature(socket.assigns.feature, feature_params) do
+    current_user = socket.assigns.current_user
+
+    case Features.FeatureRevisions.update_feature_revision(
+           socket.assigns.feature,
+           current_user,
+           feature_params
+         ) do
       {:ok, feature} ->
         notify_parent({:saved, feature})
 

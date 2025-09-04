@@ -9,90 +9,8 @@ defmodule SavvyFlagsWeb.FeatureLive.Show do
   alias SavvyFlags.Environments.Environment
   alias SavvyFlags.Features.FeatureRule
   alias SavvyFlags.Features
+  alias SavvyFlags.Features.FeatureRevisions
   alias SavvyFlags.Features.Feature
-
-  @impl true
-  def render(assigns) do
-    ~H"""
-    <.breadcrumb>
-      <:items><.link navigate={~p"/features"}>Features</.link></:items>
-      <:items :if={!@environment}><.badge value={@feature.key} /></:items>
-      <:items :if={@environment}>
-        <.link :if={@environment} patch={~p"/features/#{@feature}"}>
-          <.badge value={@feature.key} />
-        </.link>
-      </:items>
-      <:items :if={@environment}>
-        <span
-          class=" h-3 w-3 inline-block rounded-sm"
-          style={"background-color: #{@environment.color}"}
-        >
-        </span>
-        <span class="capitalize">{@environment.name}</span>
-        <.tag :if={@environment.id in @feature.environments_enabled} variant="success" class="ml-3">
-          Active
-        </.tag>
-        <.tag
-          :if={@environment.id not in @feature.environments_enabled}
-          variant="neutral"
-          class="ml-3"
-        >
-          Inactive
-        </.tag>
-      </:items>
-      <:actions :if={@environment}>
-        <form
-          phx-change="toggle-feature-environment"
-          phx-value-id={@environment.id}
-          class="inline-block ml-auto"
-        >
-          <.toggle
-            label="Enabled?"
-            checked={@environment.id in @feature.environments_enabled}
-            id={"feature_environments_#{@environment.name}"}
-            name={"feature_environments_#{@environment.id}"}
-          />
-        </form>
-      </:actions>
-      <:subtitle></:subtitle>
-    </.breadcrumb>
-
-    <div class=" mb-6 -mt-2">
-      <.feature_detail feature={@feature} />
-    </div>
-
-    <div class="flex-1">
-      <div class="mt-4">
-        <.feature_environment_detail
-          :if={@environment}
-          feature={@feature}
-          environment={@environment}
-        />
-      </div>
-      <div class="-mt-4">
-        <.feature_environments :if={!@environment} feature={@feature} environments={@environments} />
-      </div>
-    </div>
-
-    <.modal
-      :if={@live_action in [:fr_new, :fr_edit]}
-      id="fr-modal"
-      show
-      on_cancel={JS.patch(~p"/features/#{@feature}/environments/#{@environment}")}
-    >
-      <.live_component
-        module={SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent}
-        id={@feature_rule.id || :new}
-        title={@page_title}
-        action={@live_action}
-        feature_rule={@feature_rule}
-        environment={@environment}
-        feature={@feature}
-        patch={~p"/features/#{@feature}/environments/#{@environment}"}
-      />
-    </.modal>
-    """
-  end
 
   @impl true
   def mount(%{"reference" => reference}, _session, socket) do
@@ -115,6 +33,7 @@ defmodule SavvyFlagsWeb.FeatureLive.Show do
         |> assign(:feature, feature)
         |> assign(:page_title, "Feature #{feature.key}")
         |> assign(:environments, environments)
+        # FIXME: use on_mount + attach_hook
         |> assign(:active_nav, :features)
       else
         socket
@@ -227,41 +146,86 @@ defmodule SavvyFlagsWeb.FeatureLive.Show do
   end
 
   @impl true
+  def handle_event("rollback", %{"revision-number" => revision_number}, socket) do
+    feature = socket.assigns.feature
+
+    feature_revision =
+      Enum.find(
+        feature.feature_revisions,
+        &(&1.revision_number == String.to_integer(revision_number))
+      )
+
+    case FeatureRevisions.rollback_to(feature_revision) do
+      {:ok, _} ->
+        refresh(socket, "Feature revision rolled back to v#{feature_revision.revision_number}")
+
+      {:error, _} ->
+        socket
+        |> put_flash(:error, "Error while rolling back the feature revision")
+        |> noreply()
+    end
+  end
+
+  @impl true
+  def handle_event("publish-revision", _params, socket) do
+    feature = socket.assigns.feature
+
+    case FeatureRevisions.publish_revision(feature.last_feature_revision) do
+      {:ok, _} ->
+        refresh(socket, "Feature revision published")
+
+      {:error, _} ->
+        socket
+        |> put_flash(:error, "Error while publishing the feature revision")
+        |> noreply()
+    end
+  end
+
+  @impl true
+  def handle_event("discard-revision", _params, socket) do
+    feature = socket.assigns.feature
+
+    case FeatureRevisions.discard_revision(feature.last_feature_revision) do
+      {:ok, _} ->
+        refresh(socket, "Feature revision discarded")
+
+      {:error, _} ->
+        socket
+        |> put_flash(:error, "Error while discarding the feature revision")
+        |> noreply()
+    end
+  end
+
+  @impl true
   def handle_info(
         {SavvyFlagsWeb.FeatureLive.FeatureRuleComponent, {:deleted, feature_rule}},
         socket
       ) do
-    socket = refresh(socket)
-
-    socket =
-      if feature_rule.id do
-        put_flash(socket, :info, "Feature Rule correctly deleted")
-      else
-        socket
-      end
-
-    noreply(socket)
+    if feature_rule.id do
+      refresh(socket, "Feature Rule correctly deleted")
+    else
+      noreply(socket)
+    end
   end
 
   @impl true
   def handle_info({SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent, {:saved, _}}, socket) do
+    refresh(socket)
+  end
+
+  defp refresh(socket, message \\ nil) do
     socket
-    |> refresh()
+    |> update(:feature, fn feature, _ -> Features.get_feature_by_reference(feature.reference) end)
+    |> update(:environment, fn environment, %{feature: feature} ->
+      if environment do
+        Environments.get_environment(environment.reference, feature.last_feature_revision)
+      end
+    end)
+    |> then(&if message, do: put_flash(&1, :info, message), else: &1)
     |> noreply()
   end
 
-  defp refresh(socket) do
-    socket
-    |> update(:environment, fn environment,
-                               %{
-                                 feature: feature
-                               } ->
-      if environment do
-        Environments.get_environment(environment.reference, feature)
-      end
-    end)
-  end
-
+  # FIXME: split in authorization module
   defp can?(%User{role: role}, %Environment{}) when role in [:admin, :owner],
     do: true
 

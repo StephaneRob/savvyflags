@@ -33,6 +33,7 @@ defmodule SavvyFlags.Features do
 
   def default_feature_preloads do
     [
+      :current_feature_revision,
       feature_revisions: :feature_rules,
       feature_stats: :environment,
       last_feature_revision: last_feature_revision_query()
@@ -54,6 +55,7 @@ defmodule SavvyFlags.Features do
   defp last_feature_revision_query do
     from fr in FeatureRevision,
       order_by: [desc: fr.revision_number],
+      preload: [feature_rules: :environment],
       limit: 1
   end
 
@@ -287,5 +289,15 @@ defmodule SavvyFlags.Features do
         where: fr.scheduled_at < ^now and fr.scheduled
 
     Repo.update_all(query, set: [scheduled: false, scheduled_at: nil, activated_at: now])
+  end
+
+  def create_feature_revision(attrs) do
+    %FeatureRevision{}
+    |> FeatureRevision.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  def change_feature_revision(feature_revision, attrs \\ %{}) do
+    FeatureRevision.changeset(feature_revision, attrs)
   end
 end
