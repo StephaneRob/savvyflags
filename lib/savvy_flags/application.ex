@@ -7,14 +7,14 @@ defmodule SavvyFlags.Application do
     :dev ->
       @other_children [
         SavvyFlags.SdkConnections.SdkConnectionStats,
-        SavvyFlags.FeatureRulesActivator,
+        SavvyFlags.RulesActivator,
         {Bandit, plug: SavvyFlags.MockAttributes, port: 4001}
       ]
 
     :prod ->
       @other_children [
         SavvyFlags.SdkConnections.SdkConnectionStats,
-        SavvyFlags.FeatureRulesActivator
+        SavvyFlags.RulesActivator
       ]
 
     :test ->

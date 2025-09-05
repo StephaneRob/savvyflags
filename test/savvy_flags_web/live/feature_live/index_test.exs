@@ -14,7 +14,8 @@ defmodule SavvyFlagsWeb.FeatureLive.IndexTest do
 
       feature =
         feature_fixture(%{
-          project_id: List.first(projects).id
+          project_id: List.first(projects).id,
+          current_user_id: user.id
         })
 
       %{conn: conn, user: user, feature: feature, project: project}
@@ -70,7 +71,10 @@ defmodule SavvyFlagsWeb.FeatureLive.IndexTest do
 
       assert lv
              |> form("#feature-form",
-               feature: %{key: "test:1", default_value: %{type: "string", value: "green"}}
+               feature: %{
+                 key: "test:1",
+                 revisions: %{0 => %{value: %{type: "string", value: "green"}}}
+               }
              )
              |> render_submit()
 

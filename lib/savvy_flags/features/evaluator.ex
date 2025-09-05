@@ -1,8 +1,8 @@
-defmodule SavvyFlags.Features.FeatureEvaluator do
+defmodule SavvyFlags.Features.Evaluator do
   alias SavvyFlags.FeatureCache
   alias SavvyFlags.Features.Feature
-  alias SavvyFlags.Features.FeatureRule
-  alias SavvyFlags.Features.FeatureRuleCondition
+  alias SavvyFlags.Features.Rule
+  alias SavvyFlags.Features.RuleCondition
 
   def eval(features, params) when is_list(features) do
     features
@@ -10,32 +10,33 @@ defmodule SavvyFlags.Features.FeatureEvaluator do
   end
 
   def eval(%Feature{} = feature, params) do
-    value = feature.default_value.value
+    current_revision = feature.current_revision
+    value = current_revision.value.value
 
-    Enum.reduce_while(feature.feature_rules, value, fn feature_rule, initial_value ->
-      if eval(feature_rule, params) do
-        {:halt, feature_rule.value.value}
+    Enum.reduce_while(current_revision.rules, value, fn rule, initial_value ->
+      if eval(rule, params) do
+        {:halt, rule.value.value}
       else
         {:cont, initial_value}
       end
     end)
   end
 
-  def eval(%FeatureRule{} = feature_rule, params) do
-    Enum.all?(feature_rule.feature_rule_conditions, fn feature_rule_condition ->
-      eval(feature_rule_condition, params)
+  def eval(%Rule{} = rule, params) do
+    Enum.all?(rule.conditions, fn condition ->
+      eval(condition, params)
     end)
   end
 
-  def eval(%FeatureRuleCondition{} = feature_rule_condition, params) do
+  def eval(%RuleCondition{} = condition, params) do
     attribute_value =
-      Map.get(params, feature_rule_condition.attribute.name) ||
-        Map.get(params, :"#{feature_rule_condition.attribute.name}") || ""
+      Map.get(params, condition.attribute) ||
+        Map.get(params, :"#{condition.attribute}") || ""
 
     compare(
       attribute_value,
-      maybe_parse(feature_rule_condition.value),
-      feature_rule_condition.type
+      maybe_parse(condition.value),
+      condition.type
     )
   end
 
@@ -105,16 +106,18 @@ defmodule SavvyFlags.Features.FeatureEvaluator do
       cache &&
         FeatureCache.push_unique("feature:#{feature.reference}:sdks", sdk_connection.reference)
 
+      current_revision = feature.current_revision
+
       Map.put(acc, :"#{feature.key}", %{
-        default_value: feature.default_value.value,
-        type: feature.default_value.type,
+        default_value: current_revision.value.value,
+        type: current_revision.value.type,
         rules:
-          Enum.map(feature.feature_rules, fn fr ->
+          Enum.map(current_revision.rules, fn fr ->
             %{
               value: maybe_parse(fr.value.value),
               condition:
-                Enum.reduce(fr.feature_rule_conditions, %{}, fn frc, acc2 ->
-                  Map.put(acc2, :"#{frc.attribute.name}", %{
+                Enum.reduce(fr.conditions, %{}, fn frc, acc2 ->
+                  Map.put(acc2, :"#{frc.attribute}", %{
                     "#{frc.type}": maybe_parse(frc.value, frc.type)
                   })
                 end)

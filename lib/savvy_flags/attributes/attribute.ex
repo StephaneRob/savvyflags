@@ -11,11 +11,9 @@ defmodule SavvyFlags.Attributes.Attribute do
     field :description, :string
     field :remote, :boolean
     field :url, :string
-    field :feature_rule_conditions_count, :integer, virtual: true
     # FIXME: must be encrypted
     field :access_token, :string
     prefixed_reference :attribute
-    has_many :feature_rule_conditions, SavvyFlags.Features.FeatureRuleCondition
 
     timestamps(type: :utc_datetime)
   end

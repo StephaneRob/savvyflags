@@ -30,21 +30,23 @@ defmodule SavvyFlagsWeb.FeatureLive.FormComponent do
         />
         <.input field={@form[:description]} label="Description" />
         <.input field={@form[:project_id]} label="Project *" options={@form_projects} type="select" />
-        <.inputs_for :let={f_default_value} field={@form[:default_value]}>
-          <.input
-            field={f_default_value[:type]}
-            label="Value type"
-            options={SavvyFlags.Features.Feature.value_types()}
-            type="select"
-          />
-          <%= if f_default_value[:type].value == :boolean do %>
-            <div>
-              <.label>Default value</.label>
-              <.input field={f_default_value[:value]} label="Active?" type="checkbox" />
-            </div>
-          <% else %>
-            <.input field={f_default_value[:value]} label="Default value" />
-          <% end %>
+        <.inputs_for :let={form_revision} field={@form[:revisions]}>
+          <.inputs_for :let={form_default_value} field={form_revision[:value]}>
+            <.input
+              field={form_default_value[:type]}
+              label="Value type"
+              options={SavvyFlags.Features.Feature.value_types()}
+              type="select"
+            />
+            <%= if form_default_value[:type].value == :boolean do %>
+              <div>
+                <.label>Default value</.label>
+                <.input field={form_default_value[:value]} label="Active?" type="checkbox" />
+              </div>
+            <% else %>
+              <.input field={form_default_value[:value]} label="Default value" />
+            <% end %>
+          </.inputs_for>
         </.inputs_for>
 
         <:actions>
@@ -95,11 +97,18 @@ defmodule SavvyFlagsWeb.FeatureLive.FormComponent do
   end
 
   def handle_event("save", %{"feature" => feature_params}, socket) do
+    feature_params = prepare_feature_params(feature_params, socket)
     save_feature(socket, socket.assigns.action, feature_params)
   end
 
   defp save_feature(socket, :edit, feature_params) do
-    case Features.update_feature(socket.assigns.feature, feature_params) do
+    current_user = socket.assigns.current_user
+
+    case Features.Revisions.update_revision(
+           socket.assigns.feature,
+           current_user,
+           feature_params
+         ) do
       {:ok, feature} ->
         notify_parent({:saved, feature})
 
@@ -135,4 +144,29 @@ defmodule SavvyFlagsWeb.FeatureLive.FormComponent do
   end
 
   defp notify_parent(msg), do: send(self(), {__MODULE__, msg})
+
+  defp prepare_feature_params(params, socket) do
+    revisions_params = params["revisions"] || %{}
+
+    revisions_params =
+      Enum.reduce(
+        revisions_params,
+        %{},
+        fn {idx, params}, acc ->
+          Map.put(
+            acc,
+            idx,
+            Map.merge(params, %{
+              "created_by_id" => socket.assigns.current_user.id,
+              "updated_by_id" => socket.assigns.current_user.id
+            })
+          )
+        end
+      )
+
+    Map.merge(params, %{
+      "current_user_id" => socket.assigns.current_user.id,
+      "revisions" => revisions_params
+    })
+  end
 end

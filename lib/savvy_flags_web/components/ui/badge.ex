@@ -2,7 +2,7 @@ defmodule SavvyFlagsWeb.UI.Badge do
   use Phoenix.Component
 
   attr :value, :string, required: true
-  attr :variant, :string, values: ~w(code warning default), default: "default"
+  attr :variant, :string, values: ~w(code warning success default), default: "default"
   attr :size, :string, values: ~w(sm md lg), default: "md"
   attr :class, :string, default: nil
 
@@ -25,7 +25,8 @@ defmodule SavvyFlagsWeb.UI.Badge do
     case variant do
       "code" -> "border border-black-300 font-normal"
       "warning" -> "border border-amber-400 bg-amber-300"
-      _ -> "bg-neutral-200 text-neutral-900"
+      "success" -> "border border-emerald-400 bg-emerald-300"
+      _ -> "border border-neutral-200 bg-neutral-200 text-neutral-900"
     end
   end
 

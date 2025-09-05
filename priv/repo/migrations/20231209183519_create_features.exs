@@ -6,7 +6,6 @@ defmodule SavvyFlags.Repo.Migrations.CreateFeatures do
       add :reference, :string, null: false
       add :key, :string, null: false
       add :description, :text
-      add :default_value, :jsonb
       add :project_id, references(:projects, on_delete: :delete_all)
       add :environments_enabled, {:array, :integer}, default: []
       add :archived_at, :utc_datetime
@@ -16,6 +15,20 @@ defmodule SavvyFlags.Repo.Migrations.CreateFeatures do
 
     create unique_index(:features, [:key])
     create unique_index(:features, [:reference])
+
+    create table(:feature_revisions) do
+      add :feature_id, references(:features, on_delete: :delete_all), null: false
+      add :revision_number, :integer, null: false
+      add :status, :string, null: false, default: "draft"
+      add :created_by_id, references(:users, on_delete: :delete_all), null: false
+      add :updated_by_id, references(:users, on_delete: :delete_all), null: false
+      add :value, :jsonb, default: "{}"
+
+      timestamps()
+    end
+
+    create unique_index(:feature_revisions, [:feature_id, :revision_number])
+    create index(:feature_revisions, [:feature_id])
 
     create table(:feature_stats) do
       add :feature_id, references(:features, on_delete: :delete_all), null: false
@@ -36,26 +49,14 @@ defmodule SavvyFlags.Repo.Migrations.CreateFeatures do
       add :activated_at, :utc_datetime
       add :description, :text
       add :value, :jsonb
-      add :feature_id, references(:features, on_delete: :delete_all), null: false
+      add :conditions, {:array, :map}, default: []
+      add :revision_id, references(:feature_revisions, on_delete: :delete_all), null: false
       add :environment_id, references(:environments, on_delete: :delete_all), null: false
 
       timestamps(type: :utc_datetime)
     end
 
     create unique_index(:feature_rules, [:reference])
-
-    create table(:feature_rule_conditions) do
-      add :position, :integer, null: false
-      add :reference, :string, null: false
-      add :value, :jsonb
-      add :feature_rule_id, references(:feature_rules, on_delete: :delete_all), null: false
-      add :attribute_id, references(:attributes, on_delete: :delete_all), null: false
-      add :type, :string, null: false
-
-      timestamps(type: :utc_datetime)
-    end
-
-    create unique_index(:feature_rule_conditions, [:reference])
 
     create table(:user_features, primary_key: false) do
       add :user_id, references(:users)

@@ -126,7 +126,6 @@ defmodule SavvyFlagsWeb.AttributeLive.FormComponent do
   defp save_attribute(socket, :edit, attribute_params) do
     case Attributes.update_attribute(socket.assigns.attribute, attribute_params) do
       {:ok, attribute} ->
-        attribute = SavvyFlags.Repo.preload(attribute, :feature_rule_conditions)
         notify_parent({:saved, attribute})
 
         {:noreply,
@@ -142,7 +141,6 @@ defmodule SavvyFlagsWeb.AttributeLive.FormComponent do
   defp save_attribute(socket, :new, attribute_params) do
     case Attributes.create_attribute(attribute_params) do
       {:ok, attribute} ->
-        attribute = SavvyFlags.Repo.preload(attribute, :feature_rule_conditions)
         notify_parent({:saved, attribute})
 
         {:noreply,

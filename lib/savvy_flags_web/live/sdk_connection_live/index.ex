@@ -81,15 +81,12 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Index do
     projects = Projects.list_projects()
     environments = Environments.list_environments()
 
-    socket =
-      socket
-      |> stream_configure(:sdk_connection, dom_id: & &1.reference)
-      |> stream(:sdk_connections, sdk_connections)
-      |> assign(:projects, projects)
-      |> assign(:environments, environments)
-      |> assign(:active_nav, :sdk_connections)
-
-    {:ok, socket}
+    socket
+    |> stream_configure(:sdk_connection, dom_id: & &1.reference)
+    |> stream(:sdk_connections, sdk_connections)
+    |> assign(:projects, projects)
+    |> assign(:environments, environments)
+    |> ok()
   end
 
   @impl true
@@ -124,6 +121,9 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Index do
         socket
       ) do
     sdk_connection = SavvyFlags.Repo.preload(sdk_connection, [:environment, :projects])
-    {:noreply, stream_insert(socket, :sdk_connections, sdk_connection)}
+
+    socket
+    |> stream_insert(:sdk_connections, sdk_connection)
+    |> noreply()
   end
 end

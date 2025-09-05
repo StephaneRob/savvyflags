@@ -109,7 +109,6 @@ defmodule SavvyFlagsWeb.UserLive.Index do
     |> assign(:projects, Projects.list_projects())
     |> assign(:features, Features.list_features())
     |> assign(:environments, Environments.list_environments())
-    |> assign(:active_nav, :users)
     |> ok()
   end
 

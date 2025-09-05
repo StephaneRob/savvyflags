@@ -1,10 +1,10 @@
-defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
+defmodule SavvyFlagsWeb.FeatureLive.RuleFormComponent do
+  alias SavvyFlags.Features.RuleCondition
   use SavvyFlagsWeb, :live_component
 
+  alias Ecto.Changeset
   alias SavvyFlags.Attributes
-  alias SavvyFlags.Attributes.Attribute
   alias SavvyFlags.Features
-  alias SavvyFlags.Features.FeatureRuleCondition
 
   @impl true
   def render(assigns) do
@@ -30,60 +30,60 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
         <.input
           field={@form[:description]}
           label="Description *"
-          id={"fr_description_#{@feature_rule.reference}"}
+          id={"fr_description_#{@rule.reference}"}
           placeholder="ex: Activate for gmail.com user"
         />
         <.input type="hidden" field={@form[:position]} />
         <fieldset class="flex flex-col gap-2">
           <legend class="font-bold">Conditions</legend>
-          <.inputs_for :let={f_feature_rule_condition} field={@form[:feature_rule_conditions]}>
-            <div class={"flex gap-2 items-center" <> if(f_feature_rule_condition[:delete].value == "true", do: " opacity-20", else: "")}>
+          <.inputs_for :let={form_conditions} field={@form[:conditions]}>
+            <div class={"flex gap-2 items-center" <> if(form_conditions[:delete].value == "true", do: " opacity-20", else: "")}>
               <.input
-                field={f_feature_rule_condition[:attribute_id]}
+                field={form_conditions[:attribute]}
                 type="select"
-                options={Enum.into(@attributes, [], &{&1.name, &1.id})}
-                id={"frc_attribute_id_#{f_feature_rule_condition[:reference].value}"}
+                options={Enum.into(@attributes, [], &{&1.name, &1.name})}
+                id={"frc_attribute_id_#{form_conditions[:reference].value}"}
               />
 
               <.input
-                field={f_feature_rule_condition[:type]}
+                field={form_conditions[:type]}
                 type="select"
-                options={SavvyFlags.Features.FeatureRuleCondition.types()}
-                id={"frc_type_id_#{f_feature_rule_condition[:reference].value}"}
+                options={SavvyFlags.Features.RuleCondition.types()}
+                id={"frc_type_id_#{form_conditions[:reference].value}"}
               />
 
               <.value_input
-                attribute_id={f_feature_rule_condition[:attribute_id].value}
-                condition_type={f_feature_rule_condition[:type].value}
-                field={f_feature_rule_condition[:value]}
+                attribute_id={form_conditions[:attribute_id].value}
+                condition_type={form_conditions[:type].value}
+                field={form_conditions[:value]}
               />
 
-              <.input
-                field={f_feature_rule_condition[:position]}
-                value={f_feature_rule_condition.index}
+              <%!-- <.input
+                field={form_conditions[:position]}
+                value={form_conditions.index}
                 type="hidden"
-                id={"frc_position_id_#{f_feature_rule_condition[:reference].value}"}
-              />
+                id={"frc_position_id_#{form_conditions[:reference].value}"}
+              /> --%>
 
               <.button
                 class="mt-2"
                 type="button"
                 variant="link"
                 size="sm"
-                phx-value-index={f_feature_rule_condition.index}
+                phx-value-index={form_conditions.index}
                 phx-click="delete-line"
                 phx-target={@myself}
               >
                 <.icon name="hero-trash" class="h-3 w-3 text-red-500" />
               </.button>
               <.input
-                field={f_feature_rule_condition[:delete]}
+                field={form_conditions[:delete]}
                 type="hidden"
-                id={"frc_delete_#{f_feature_rule_condition[:reference].value}"}
+                id={"frc_delete_#{form_conditions[:reference].value}"}
               />
             </div>
           </.inputs_for>
-          <%= if @form[:feature_rule_conditions].value == [] do %>
+          <%= if @form[:conditions].value == [] do %>
             <p class="text-xs text-neutral-500">
               No conditions created yet.
               <.icon name="hero-exclamation-triangle-solid" class="h-3 w-3" />
@@ -106,26 +106,26 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
         <.inputs_for :let={fr_value} field={@form[:value]}>
           <.input
             field={fr_value[:type]}
-            value={@feature.default_value.type}
+            value={@feature.last_revision.value.type}
             type="hidden"
             class="h-0"
-            id={"frv_type_#{@feature_rule.reference}"}
+            id={"frv_type_#{@rule.reference}"}
           />
-          <%= if @feature.default_value.type == :boolean do %>
+          <%= if @feature.last_revision.value.type == :boolean do %>
             <div>
               <.label>Forced value</.label>
               <.input
                 field={fr_value[:value]}
                 label="Active?"
                 type="checkbox"
-                id={"frv_value_#{@feature_rule.reference}"}
+                id={"frv_value_#{@rule.reference}"}
               />
             </div>
           <% else %>
             <.input
               field={fr_value[:value]}
               label="Forced value"
-              id={"frv_value_#{@feature_rule.reference}"}
+              id={"frv_value_#{@rule.reference}"}
             />
           <% end %>
         </.inputs_for>
@@ -134,7 +134,7 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
           label="Scheduled rule?"
           checked={@form[:scheduled].value}
           id="fr_scheduled"
-          name="feature_rule[scheduled]"
+          name="rule[scheduled]"
         />
 
         <%= if @form[:scheduled].value in [true, "on"] do %>
@@ -165,11 +165,11 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
   end
 
   @impl true
-  def update(%{feature_rule: feature_rule} = assigns, socket) do
+  def update(%{rule: rule} = assigns, socket) do
     %{feature: feature, environment: environment} = assigns
 
     changeset =
-      Features.change_feature_rule(feature_rule, %{
+      Features.change_rule(rule, %{
         "feature_id" => feature.id,
         "environment_id" => environment.id
       })
@@ -186,15 +186,15 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
   end
 
   @impl true
-  def handle_event("validate", %{"feature_rule" => feature_rule_params}, socket) do
-    scheduled = Map.get(feature_rule_params, "scheduled")
+  def handle_event("validate", %{"rule" => rule_params}, socket) do
+    scheduled = Map.get(rule_params, "scheduled")
 
-    feature_rule_params =
-      Map.put(feature_rule_params, "scheduled", if(scheduled == "on", do: true, else: false))
+    rule_params =
+      Map.put(rule_params, "scheduled", if(scheduled == "on", do: true, else: false))
 
     changeset =
-      socket.assigns.feature_rule
-      |> Features.change_feature_rule(feature_rule_params)
+      socket.assigns.rule
+      |> Features.change_rule(rule_params)
       |> Map.put(:action, :validate)
 
     {:noreply, assign_form(socket, changeset)}
@@ -202,22 +202,22 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
 
   @impl true
   def handle_event("delete-feature-rule", _, socket) do
-    feature_rule = socket.assigns.feature_rule
-    Features.delete_feature_rule(feature_rule)
-    send(self(), {__MODULE__, {:deleted, feature_rule}})
+    rule = socket.assigns.rule
+    Features.delete_rule(rule)
+    send(self(), {__MODULE__, {:deleted, rule}})
     {:noreply, socket}
   end
 
   @impl true
-  def handle_event("save", %{"feature_rule" => feature_rule_params}, socket) do
-    feature_rule = socket.assigns.feature_rule
-    action = if feature_rule.id, do: :edit, else: :new
-    scheduled = Map.get(feature_rule_params, "scheduled")
+  def handle_event("save", %{"rule" => rule_params}, socket) do
+    rule = socket.assigns.rule
+    action = if rule.id, do: :edit, else: :new
+    scheduled = Map.get(rule_params, "scheduled")
 
-    feature_rule_params =
-      Map.put(feature_rule_params, "scheduled", if(scheduled == "on", do: true, else: false))
+    rule_params =
+      Map.put(rule_params, "scheduled", if(scheduled == "on", do: true, else: false))
 
-    save_feature_rule(socket, action, feature_rule_params)
+    save_rule(socket, action, rule_params)
   end
 
   def handle_event("add-line", _, socket) do
@@ -225,21 +225,9 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
 
     socket =
       update(socket, :form, fn %{source: changeset} ->
-        existing = Ecto.Changeset.get_assoc(changeset, :feature_rule_conditions)
-
-        changeset =
-          Ecto.Changeset.put_assoc(
-            changeset,
-            :feature_rule_conditions,
-            existing ++
-              [
-                %FeatureRuleCondition{
-                  attribute_id: List.first(attributes).id,
-                  reference: SavvyFlags.PrefixedId.generate(:feature_rule_condition)
-                }
-              ]
-          )
-
+        existing = Changeset.get_embed(changeset, :conditions)
+        new_condition = %RuleCondition{attribute: List.first(attributes).name}
+        changeset = Changeset.put_embed(changeset, :conditions, existing ++ [new_condition])
         to_form(changeset)
       end)
 
@@ -251,18 +239,11 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
 
     socket =
       update(socket, :form, fn %{source: changeset} ->
-        existing = Ecto.Changeset.get_assoc(changeset, :feature_rule_conditions)
-        {to_delete, rest} = List.pop_at(existing, index)
-
-        new_frc =
-          if Ecto.Changeset.change(to_delete).data.id do
-            List.replace_at(existing, index, Ecto.Changeset.change(to_delete, delete: "true"))
-          else
-            rest
-          end
+        existing = Changeset.get_embed(changeset, :conditions)
+        {_to_delete, rest} = List.pop_at(existing, index)
 
         changeset
-        |> Ecto.Changeset.put_assoc(:feature_rule_conditions, new_frc)
+        |> Changeset.put_embed(:conditions, rest)
         |> to_form()
       end)
 
@@ -275,12 +256,19 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
     |> noreply()
   end
 
-  defp save_feature_rule(socket, :edit, feature_rule_params) do
-    feature_rule = socket.assigns.feature_rule
+  defp save_rule(socket, :edit, rule_params) do
+    feature = socket.assigns.feature
+    user = socket.assigns.current_user
+    rule = socket.assigns.rule
 
-    case Features.update_feature_rule(feature_rule, feature_rule_params) do
-      {:ok, feature_rule} ->
-        send(self(), {__MODULE__, {:saved, feature_rule}})
+    case Features.Revisions.update_rule_with_revision(
+           rule,
+           feature,
+           user,
+           rule_params
+         ) do
+      {:ok, rule} ->
+        send(self(), {__MODULE__, {:saved, rule}})
 
         socket
         |> put_flash(:info, "Feature rule updated successfully")
@@ -294,18 +282,22 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
     end
   end
 
-  defp save_feature_rule(socket, :new, feature_rule_params) do
-    %{feature: feature, environment: environment} = socket.assigns
+  defp save_rule(socket, :new, rule_params) do
+    %{feature: feature, environment: environment, current_user: current_user} = socket.assigns
 
-    feature_rule_params =
-      Map.merge(feature_rule_params, %{
-        "feature_id" => feature.id,
+    rule_params =
+      Map.merge(rule_params, %{
+        "revision_id" => feature.last_revision.id,
         "environment_id" => environment.id
       })
 
-    case Features.create_feature_rule(feature_rule_params) do
-      {:ok, feature_rule} ->
-        send(self(), {__MODULE__, {:saved, feature_rule}})
+    case Features.Revisions.create_rule_with_revision(
+           feature,
+           current_user,
+           rule_params
+         ) do
+      {:ok, rule} ->
+        send(self(), {__MODULE__, {:saved, rule}})
 
         socket
         |> put_flash(:info, "Feature rule created successfully")
@@ -317,43 +309,43 @@ defmodule SavvyFlagsWeb.FeatureLive.FeatureRuleFormComponent do
     end
   end
 
-  defp value_input(%{attribute_id: attribute_id} = assigns) do
-    assigns =
-      Map.merge(assigns, %{
-        attribute: Attributes.get_attribute!(attribute_id)
-      })
+  defp value_input(assigns) do
+    # assigns =
+    #   Map.merge(assigns, %{
+    #     attribute: Attributes.get_attribute!(attribute_id)
+    #   })
 
     do_value_input(assigns)
   end
 
-  defp do_value_input(
-         %{
-           attribute: %Attribute{remote: true} = attribute,
-           condition_type: condition_type
-         } = assigns
-       )
-       when condition_type not in [:sample] do
-    multiple = condition_type in [:in, "in", :not_in, "not_in"]
+  # defp do_value_input(
+  #        %{
+  #          attribute: %Attribute{remote: true} = attribute,
+  #          condition_type: condition_type
+  #        } = assigns
+  #      )
+  #      when condition_type not in [:sample] do
+  #   multiple = condition_type in [:in, "in", :not_in, "not_in"]
 
-    onchange = fn value ->
-      SavvyFlags.AttributeClient.request(
-        attribute,
-        value
-      )
-    end
+  #   onchange = fn value ->
+  #     SavvyFlags.AttributeClient.request(
+  #       attribute,
+  #       value
+  #     )
+  #   end
 
-    assigns = Map.merge(assigns, %{onchange: onchange, multiple: multiple})
+  #   assigns = Map.merge(assigns, %{onchange: onchange, multiple: multiple})
 
-    ~H"""
-    <.live_component
-      module={SavvyFlagsWeb.Search}
-      id={"test-search-#{@field.name}"}
-      field={@field}
-      onchange={@onchange}
-      multiple={@multiple}
-    />
-    """
-  end
+  #   ~H"""
+  #   <.live_component
+  #     module={SavvyFlagsWeb.Search}
+  #     id={"test-search-#{@field.name}"}
+  #     field={@field}
+  #     onchange={@onchange}
+  #     multiple={@multiple}
+  #   />
+  #   """
+  # end
 
   defp do_value_input(%{condition_type: condition_type} = assigns)
        when condition_type in [:sample, "sample"] do

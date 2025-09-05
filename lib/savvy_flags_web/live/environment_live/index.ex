@@ -56,13 +56,10 @@ defmodule SavvyFlagsWeb.EnvironmentLive.Index do
   def mount(_params, _session, socket) do
     environments = Environments.list_environments()
 
-    socket =
-      socket
-      |> stream_configure(:environments, dom_id: & &1.reference)
-      |> stream(:environments, environments)
-      |> assign(:active_nav, :environments)
-
-    {:ok, socket}
+    socket
+    |> stream_configure(:environments, dom_id: & &1.reference)
+    |> stream(:environments, environments)
+    |> ok()
   end
 
   @impl true

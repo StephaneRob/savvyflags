@@ -9,7 +9,7 @@ defmodule SavvyFlags.Environments.Environment do
     field :color, :string
     field :description, :string
     prefixed_reference :environment
-    has_many :feature_rules, SavvyFlags.Features.FeatureRule
+    has_many :rules, SavvyFlags.Features.Rule
 
     many_to_many :sdk_connections, SavvyFlags.SdkConnections.SdkConnection,
       join_through: "sdk_connection_environments"

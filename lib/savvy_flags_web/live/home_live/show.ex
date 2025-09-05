@@ -7,12 +7,7 @@ defmodule SavvyFlagsWeb.HomeLive.Show do
 
   @impl true
   def mount(_params, _session, socket) do
-    socket =
-      socket
-      |> assign(:active_nav, :home)
-      |> redirect(to: ~p"/features")
-
-    {:ok, socket}
+    {:ok, redirect(socket, to: ~p"/features")}
   end
 
   @impl true

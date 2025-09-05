@@ -1,13 +1,13 @@
 defmodule SavvyFlags.Features do
   import Ecto.Query
-  alias SavvyFlags.Features.FeatureStat
+  alias SavvyFlags.Features.Stat
   alias SavvyFlags.Accounts
   alias SavvyFlags.Configurations
-  alias SavvyFlags.Features.FeatureRuleCondition
   alias SavvyFlags.Repo
   alias SavvyFlags.Features.Feature
-  alias SavvyFlags.Features.FeatureStat
-  alias SavvyFlags.Features.FeatureRule
+  alias SavvyFlags.Features.Revision
+  alias SavvyFlags.Features.Stat
+  alias SavvyFlags.Features.Rule
 
   def get_feature!(id), do: Repo.get(Feature, id)
 
@@ -31,14 +31,32 @@ defmodule SavvyFlags.Features do
     |> Repo.all()
   end
 
+  def default_feature_preloads do
+    [
+      :current_revision,
+      revisions: :rules,
+      stats: :environment,
+      last_revision: last_revision_query()
+    ]
+  end
+
   defp list_features_query(filters) do
     query =
       from f in Feature,
         order_by: [desc: f.inserted_at],
         join: p in assoc(f, :project),
-        preload: [feature_stats: :environment]
+        join: fr in assoc(f, :revisions),
+        join: ir in assoc(f, :initial_revision),
+        preload: ^default_feature_preloads()
 
-    where(query, [f, p], ^filters(filters))
+    where(query, [f, p, ir], ^filters(filters))
+  end
+
+  defp last_revision_query do
+    from fr in Revision,
+      order_by: [desc: fr.revision_number],
+      preload: [rules: :environment],
+      limit: 1
   end
 
   def list_features_for_user(user_id, filters \\ %{}) do
@@ -56,7 +74,7 @@ defmodule SavvyFlags.Features do
         left_join: up in assoc(p, :users),
         order_by: [desc: f.inserted_at],
         where: u.id == ^user_id or up.id == ^user_id,
-        preload: [feature_stats: :environment]
+        preload: ^default_feature_preloads()
 
     where(query, [f], ^filters(filters))
   end
@@ -93,24 +111,24 @@ defmodule SavvyFlags.Features do
   end
 
   defp apply_filter({"value_type", value}, dynamic) when value != "" do
-    dynamic([f], ^dynamic and fragment("default_value ->'type' = ?", ^value))
+    dynamic([f, p, ir], ^dynamic and fragment("? ->'type' = ?", ir.value, ^value))
   end
 
   defp apply_filter(_, dynamic), do: dynamic
 
   def list_features_for_projects_and_environments(project_ids, environment_id) do
-    feature_rule_query =
-      from fr in FeatureRule,
+    rule_query =
+      from fr in Rule,
         where: fr.environment_id == ^environment_id and not fr.scheduled,
-        order_by: [asc: :position],
-        preload: [feature_rule_conditions: :attribute]
+        order_by: [asc: :position]
 
     q =
       from f in Feature,
         where: f.project_id in ^project_ids,
         where: is_nil(f.archived_at),
         where: ^environment_id in f.environments_enabled,
-        preload: [feature_rules: ^feature_rule_query]
+        join: cr in assoc(f, :current_revision),
+        preload: [current_revision: [rules: ^rule_query]]
 
     Repo.all(q)
   end
@@ -120,9 +138,9 @@ defmodule SavvyFlags.Features do
       from f in Feature,
         where: f.reference == ^reference,
         preload: [
-          :environments,
-          feature_rules: [feature_rule_conditions: :attribute],
-          feature_stats: :environment
+          revisions: :rules,
+          stats: :environment,
+          last_revision: ^last_revision_query()
         ]
 
     Repo.one!(query)
@@ -130,6 +148,7 @@ defmodule SavvyFlags.Features do
 
   def create_feature(attrs \\ %{}) do
     %Feature{}
+    |> Repo.preload(:revisions)
     |> Feature.create_changeset(attrs)
     |> Repo.insert()
   end
@@ -141,7 +160,7 @@ defmodule SavvyFlags.Features do
   def touch(feature_ids, environment_id) when is_list(feature_ids) do
     now = DateTime.utc_now() |> DateTime.truncate(:second)
 
-    feature_stats =
+    stats =
       Enum.map(
         feature_ids,
         &%{
@@ -155,8 +174,8 @@ defmodule SavvyFlags.Features do
       )
 
     Repo.insert_all(
-      FeatureStat,
-      feature_stats,
+      Stat,
+      stats,
       conflict_target: [:feature_id, :environment_id],
       on_conflict: {:replace, [:last_used_at, :updated_at]}
     )
@@ -192,8 +211,8 @@ defmodule SavvyFlags.Features do
     threshold = Configurations.stale_threshold()
 
     last_used_at =
-      if feature.feature_stats != [] do
-        List.first(feature.feature_stats).last_used_at
+      if feature.stats != [] do
+        List.first(feature.stats).last_used_at
       end
 
     case last_used_at do
@@ -202,93 +221,83 @@ defmodule SavvyFlags.Features do
     end
   end
 
-  def get_feature_rule_by_reference!(reference) do
-    FeatureRule
-    |> Repo.get_by!(reference: reference)
-    |> Repo.preload(:feature_rule_conditions)
-  end
-
-  def get_feature_rule_condition_by_reference!(value) when value in ["", nil] do
-    nil
-  end
-
-  def get_feature_rule_condition_by_reference!(reference) do
-    FeatureRuleCondition
+  def get_rule_by_reference!(reference) do
+    Rule
     |> Repo.get_by!(reference: reference)
   end
 
-  def create_feature_rule(attrs \\ %{}) do
-    %FeatureRule{}
-    |> Repo.preload(:feature_rule_conditions)
-    |> FeatureRule.changeset(attrs)
+  def create_rule(attrs \\ %{}) do
+    %Rule{}
+    |> Rule.changeset(attrs)
     |> Repo.insert()
   end
 
-  def update_feature_rule(feature_rule, attrs \\ %{}) do
-    response =
-      feature_rule
-      |> Repo.preload([:feature_rule_conditions, :feature])
-      |> FeatureRule.changeset(attrs)
-      |> Repo.update()
-
-    case response do
-      {:ok, feature_rule} ->
-        SavvyFlags.FeatureCache.reset(feature_rule.feature)
-        response
-
-      error ->
-        error
-    end
+  # FIXME handle Cache reset
+  def update_rule(rule, attrs \\ %{}) do
+    rule
+    |> Repo.preload([:revision])
+    |> Rule.changeset(attrs)
+    |> Repo.update()
   end
 
-  def change_feature_rule(feature_rule, attrs \\ %{}) do
-    FeatureRule.changeset(feature_rule, attrs)
+  def change_rule(rule, attrs \\ %{}) do
+    Rule.changeset(rule, attrs)
   end
 
-  def delete_feature_rule(feature_rule) do
-    Repo.delete(feature_rule)
+  def delete_rule(rule) do
+    Repo.delete(rule)
   end
 
-  def reorder_feature_rules(features_rules, %{"old" => old, "new" => new, "id" => id})
+  def reorder_rules(features_rules, %{"old" => old, "new" => new, "id" => id})
       when old < new do
-    moved_feature_rule = Enum.find(features_rules, &(&1.id == id || "#{&1.id}" == id))
+    moved_rule = Enum.find(features_rules, &(&1.id == id || "#{&1.id}" == id))
     lower_items = Enum.filter(features_rules, &(&1.position > old && &1.position <= new))
 
     Repo.transaction(fn ->
-      update_feature_rule(moved_feature_rule, %{position: new})
+      update_rule(moved_rule, %{position: new})
 
       Enum.each(lower_items, fn i ->
         position = i.position - 1
-        update_feature_rule(i, %{position: position})
+        update_rule(i, %{position: position})
       end)
     end)
   end
 
-  def reorder_feature_rules(features_rules, %{"old" => old, "new" => new, "id" => id})
+  def reorder_rules(features_rules, %{"old" => old, "new" => new, "id" => id})
       when old > new do
-    moved_feature_rule = Enum.find(features_rules, &(&1.id == id || "#{&1.id}" == id))
+    moved_rule = Enum.find(features_rules, &(&1.id == id || "#{&1.id}" == id))
     lower_items = Enum.filter(features_rules, &(&1.position < old && &1.position >= new))
 
     Repo.transaction(fn ->
-      update_feature_rule(moved_feature_rule, %{position: new})
+      update_rule(moved_rule, %{position: new})
 
       Enum.each(lower_items, fn i ->
         position = i.position + 1
-        update_feature_rule(i, %{position: position})
+        update_rule(i, %{position: position})
       end)
     end)
   end
 
-  def reorder_feature_rules(_, _) do
+  def reorder_rules(_, _) do
   end
 
-  def enable_feature_rules! do
+  def enable_rules! do
     now = DateTime.utc_now()
 
     query =
-      from fr in FeatureRule,
+      from fr in Rule,
         where: fr.scheduled_at < ^now and fr.scheduled
 
     Repo.update_all(query, set: [scheduled: false, scheduled_at: nil, activated_at: now])
+  end
+
+  def create_revision(attrs) do
+    %Revision{}
+    |> Revision.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  def change_revision(revision, attrs \\ %{}) do
+    Revision.changeset(revision, attrs)
   end
 end

@@ -18,7 +18,8 @@ defmodule SavvyFlagsWeb.FeatureLive.ShowTest do
 
     feature =
       feature_fixture(%{
-        project_id: List.first(projects).id
+        project_id: List.first(projects).id,
+        current_user_id: user.id
       })
 
     %{conn: conn, user: user, feature: feature, project: project, environment: environment}
@@ -65,12 +66,12 @@ defmodule SavvyFlagsWeb.FeatureLive.ShowTest do
     assert_patch(lv, ~p"/features/#{feature}/environments/#{environment}/rules/new")
 
     assert lv
-           |> form("#feature-rule-form", feature_rule: %{description: nil})
+           |> form("#feature-rule-form", rule: %{description: nil})
            |> render_change() =~ "can&#39;t be blank"
 
     assert lv
            |> form("#feature-rule-form",
-             feature_rule: %{description: "My rule", value: %{value: true}}
+             rule: %{description: "My rule", value: %{value: true}}
            )
            |> render_submit()
 

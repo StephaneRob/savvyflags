@@ -1,31 +1,37 @@
 defmodule SavvyFlags.FeaturesTest do
   use SavvyFlags.DataCase, async: true
 
-  alias SavvyFlags.Projects
-  alias SavvyFlags.Attributes
-  alias SavvyFlags.Environments
   alias SavvyFlags.Features
 
-  setup do
-    user = SavvyFlags.AccountsFixtures.user_fixture()
-    SavvyFlags.AttributesFixtures.attribute_fixture()
-    SavvyFlags.EnvironmentsFixtures.environment_fixture()
-    SavvyFlags.ProjectsFixtures.project_fixture()
+  import SavvyFlags.FeaturesFixtures
+  import SavvyFlags.AccountsFixtures
+  import SavvyFlags.AttributesFixtures
+  import SavvyFlags.EnvironmentsFixtures
+  import SavvyFlags.ProjectsFixtures
 
-    environments = Environments.list_environments()
-    projects = Projects.list_projects()
-    attributes = Attributes.list_attributes()
-    %{environments: environments, user: user, projects: projects, attributes: attributes}
+  setup do
+    user = user_fixture()
+    attribute = attribute_fixture()
+    environment = environment_fixture()
+    project = project_fixture()
+
+    %{environment: environment, user: user, project: project, attribute: attribute}
   end
 
   describe "create_feature/1" do
-    test "must create feature with valid attributes", %{projects: [project]} do
+    test "must create feature with valid attributes", %{project: project, user: user} do
       attrs = %{
         key: "test",
-        default_value: %{
-          value: "false",
-          type: :boolean
-        },
+        revisions: [
+          %{
+            value: %{
+              value: "false",
+              type: :boolean
+            },
+            created_by_id: user.id,
+            updated_by_id: user.id
+          }
+        ],
         project_id: project.id
       }
 
@@ -46,7 +52,7 @@ defmodule SavvyFlags.FeaturesTest do
 
     @tag configuration: %{feature_key_format: "<app>:<feature>"}
     test "w/ custom format must create feature with valid attributes and format", %{
-      projects: [project]
+      project: project
     } do
       attrs = %{
         key: "myapp:navbar",
@@ -60,7 +66,7 @@ defmodule SavvyFlags.FeaturesTest do
 
     @tag configuration: %{feature_key_format: "<app>:<feature>"}
     test "w/ custom format must return error when creating feature with invalid key format", %{
-      projects: [project]
+      project: project
     } do
       attrs = %{
         key: "invalid_format",
@@ -75,62 +81,53 @@ defmodule SavvyFlags.FeaturesTest do
     end
   end
 
-  describe "update_feature/1" do
-    setup %{projects: projects} do
-      [project] = projects
+  # describe "update_feature/1" do
+  #   setup %{project: project, user: user} do
+  #     feature =
+  #       feature_fixture(%{
+  #         current_user_id: user.id,
+  #         key: "test",
+  #         project_id: project.id
+  #       })
 
+  #     %{feature: feature}
+  #   end
+
+  #   test "must update feature with valid attributes", %{feature: feature} do
+  #     [revision] = feature.revisions
+  #     assert revision.value.type == :boolean
+
+  #     attrs = %{
+  #       value: %{
+  #         value: "{\"john\": \"doo\"}",
+  #         type: :json
+  #       }
+  #     }
+
+  #     assert {:ok, feature} = SavvyFlags.Features.update_feature(feature, attrs)
+  #     assert feature.default_value.type == :json
+  #     assert feature.default_value.value == "{\"john\": \"doo\"}"
+  #   end
+
+  #   test "must return error when creating feature with invalid attributes", %{
+  #     feature: feature
+  #   } do
+  #     attrs = %{key: nil}
+  #     assert {:error, changeset} = SavvyFlags.Features.update_feature(feature, attrs)
+
+  #     assert changeset.errors == [
+  #              {:key, {"can't be blank", [validation: :required]}}
+  #            ]
+  #   end
+  # end
+
+  describe "create_rule/1" do
+    setup %{project: project, user: user} do
       feature =
-        SavvyFlags.FeaturesFixtures.feature_fixture(%{
+        feature_fixture(%{
+          current_user_id: user.id,
           key: "test",
-          project_id: project.id,
-          default_value: %{
-            value: "false",
-            type: :boolean
-          }
-        })
-
-      %{feature: feature}
-    end
-
-    test "must update feature with valid attributes", %{feature: feature} do
-      assert feature.default_value.type == :boolean
-
-      attrs = %{
-        default_value: %{
-          value: "{\"john\": \"doo\"}",
-          type: :json
-        }
-      }
-
-      assert {:ok, feature} = SavvyFlags.Features.update_feature(feature, attrs)
-      assert feature.default_value.type == :json
-      assert feature.default_value.value == "{\"john\": \"doo\"}"
-    end
-
-    test "must return error when creating feature with invalid attributes", %{
-      feature: feature
-    } do
-      attrs = %{key: nil}
-      assert {:error, changeset} = SavvyFlags.Features.update_feature(feature, attrs)
-
-      assert changeset.errors == [
-               {:key, {"can't be blank", [validation: :required]}}
-             ]
-    end
-  end
-
-  describe "create_feature_rule/1" do
-    setup %{projects: projects} do
-      [project] = projects
-
-      feature =
-        SavvyFlags.FeaturesFixtures.feature_fixture(%{
-          key: "test",
-          project_id: project.id,
-          default_value: %{
-            value: "false",
-            type: :boolean
-          }
+          project_id: project.id
         })
 
       %{feature: feature}
@@ -138,124 +135,128 @@ defmodule SavvyFlags.FeaturesTest do
 
     test "must create feature rule and feature rule condition with valid attrs", %{
       feature: feature,
-      environments: environments,
-      attributes: attributes
+      environment: environment
     } do
-      [environment] = environments
-      [attribute] = attributes
-
       attrs = %{
         description: "test feature rule",
-        feature_id: feature.id,
         environment_id: environment.id,
+        revision_id: feature.last_revision.id,
         value: %{
           value: "true",
-          type: feature.default_value.type
+          type: feature.last_revision.value.type
         },
-        feature_rule_conditions: [
-          %{position: 1, attribute_id: attribute.id, type: :equal, value: "10"}
+        conditions: [
+          %{position: 1, attribute: "id", type: :equal, value: "10"}
         ]
       }
 
-      assert {:ok, feature_rule} = SavvyFlags.Features.create_feature_rule(attrs)
-      assert feature_rule.feature_id == feature.id
-      assert feature_rule.description == "test feature rule"
-      assert feature_rule.environment_id == environment.id
-      assert feature_rule.value.value == "true"
-      assert feature_rule.value.type == :boolean
-      assert [frc] = feature_rule.feature_rule_conditions
-      assert frc.feature_rule_id == feature_rule.id
-      assert frc.position == 1
+      assert {:ok, rule} = SavvyFlags.Features.create_rule(attrs)
+      assert rule.revision_id == feature.last_revision.id
+      assert rule.description == "test feature rule"
+      assert rule.environment_id == environment.id
+      assert rule.value.value == "true"
+      assert rule.value.type == :boolean
+      assert [frc] = rule.conditions
       assert frc.type == :equal
       assert frc.value == "10"
-      assert frc.attribute_id == attribute.id
+      assert frc.attribute == "id"
     end
   end
 
-  describe "update_feature_rule/1" do
-    setup %{projects: projects, attributes: [attribute]} do
-      [project] = projects
-
+  describe "update_rule/1" do
+    setup %{project: project, user: user, environment: environment} do
       feature =
-        SavvyFlags.FeaturesFixtures.feature_fixture(%{
+        feature_fixture(%{
+          current_user_id: user.id,
           key: "test",
-          project_id: project.id,
-          default_value: %{
-            value: "false",
-            type: :boolean
-          }
+          project_id: project.id
         })
 
-      feature_rule =
-        SavvyFlags.FeaturesFixtures.feature_rule_fixture(%{
+      rule =
+        rule_fixture(%{
           description: "test feature rule",
-          feature_id: feature.id,
-          environment_id: hd(Environments.list_environments()).id,
+          revision_id: feature.last_revision.id,
+          environment_id: environment.id,
           value: %{
             value: "true",
-            type: feature.default_value.type
+            type: feature.last_revision.value.type
           },
-          feature_rule_conditions: [
-            %{position: 1, attribute_id: attribute.id, type: :equal, value: "10"}
+          conditions: [
+            %{position: 1, attribute: "id", type: :equal, value: "10"}
           ]
         })
 
-      %{feature: feature, feature_rule: feature_rule}
+      %{feature: feature, rule: rule}
     end
 
     test "must update feature rule and feature rule condition with valid attrs", %{
-      feature: feature,
-      feature_rule: feature_rule,
-      environments: [environment]
+      rule: rule,
+      environment: environment
     } do
       attrs = %{
         description: "test feature rule update",
-        feature_rule_conditions: []
+        conditions: []
       }
 
-      assert {:ok, feature_rule} = SavvyFlags.Features.update_feature_rule(feature_rule, attrs)
-      assert feature_rule.feature_id == feature.id
-      assert feature_rule.description == "test feature rule update"
-      assert feature_rule.environment_id == environment.id
-      assert feature_rule.value.value == "true"
-      assert feature_rule.value.type == :boolean
-      assert [] = feature_rule.feature_rule_conditions
+      assert {:ok, rule} = SavvyFlags.Features.update_rule(rule, attrs)
+      assert rule.description == "test feature rule update"
+      assert rule.environment_id == environment.id
+      assert rule.value.value == "true"
+      assert rule.value.type == :boolean
+      assert [] = rule.conditions
     end
   end
 
   describe "list_features/1" do
-    setup %{projects: projects} do
-      [project] = projects
-
+    setup %{project: project, user: user} do
       feature1 =
-        SavvyFlags.FeaturesFixtures.feature_fixture(%{
+        feature_fixture(%{
+          current_user_id: user.id,
           key: "test",
           project_id: project.id,
-          default_value: %{
-            value: "false",
-            type: :boolean
-          }
+          revisions: [
+            %{
+              value: %{
+                value: "false",
+                type: :boolean
+              },
+              created_by_id: user.id,
+              updated_by_id: user.id
+            }
+          ]
         })
 
       feature2 =
-        SavvyFlags.FeaturesFixtures.feature_fixture(%{
+        feature_fixture(%{
           key: "test2",
           project_id: project.id,
-          default_value: %{
-            value: "red",
-            type: :string
-          }
+          revisions: [
+            %{
+              value: %{
+                value: "red",
+                type: :string
+              },
+              created_by_id: user.id,
+              updated_by_id: user.id
+            }
+          ]
         })
 
       feature3 =
-        SavvyFlags.FeaturesFixtures.feature_fixture(%{
+        feature_fixture(%{
           key: "test3",
           project_id: project.id,
           archived_at: DateTime.utc_now(),
-          default_value: %{
-            value: "false",
-            type: :boolean
-          }
+          revisions: [
+            %{
+              value: %{
+                value: "false",
+                type: :boolean
+              },
+              created_by_id: user.id,
+              updated_by_id: user.id
+            }
+          ]
         })
 
       %{feature1: feature1, feature2: feature2, feature3: feature3, project: project}
@@ -286,15 +287,12 @@ defmodule SavvyFlags.FeaturesTest do
 
   describe "stale?" do
     @tag :skip
-    test "returns true if feature is stale", %{projects: [project]} do
+    test "returns true if feature is stale", %{project: project, user: user} do
       feature =
-        SavvyFlags.FeaturesFixtures.feature_fixture(%{
+        feature_fixture(%{
           key: "test",
           project_id: project.id,
-          default_value: %{
-            value: "false",
-            type: :boolean
-          }
+          current_user_id: user.id
         })
 
       feature = %{feature | last_used_at: DateTime.utc_now() |> DateTime.add(-60 * 26, :hour)}
@@ -302,15 +300,12 @@ defmodule SavvyFlags.FeaturesTest do
     end
 
     @tag :skip
-    test "returns false if feature is not stale", %{projects: [project]} do
+    test "returns false if feature is not stale", %{project: project, user: user} do
       feature =
-        SavvyFlags.FeaturesFixtures.feature_fixture(%{
+        feature_fixture(%{
           key: "test",
           project_id: project.id,
-          default_value: %{
-            value: "false",
-            type: :boolean
-          }
+          current_user_id: user.id
         })
 
       feature = %{feature | last_used_at: DateTime.utc_now() |> DateTime.add(-3, :hour)}

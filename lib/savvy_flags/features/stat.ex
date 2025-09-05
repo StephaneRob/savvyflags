@@ -1,4 +1,4 @@
-defmodule SavvyFlags.Features.FeatureStat do
+defmodule SavvyFlags.Features.Stat do
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -11,8 +11,8 @@ defmodule SavvyFlags.Features.FeatureStat do
     timestamps(type: :utc_datetime)
   end
 
-  def changeset(feature_stat, attrs) do
-    feature_stat
+  def changeset(stat, attrs) do
+    stat
     |> cast(attrs, [:feature_id, :environment_id, :first_used_at, :last_used_at])
     |> validate_required([:feature_id, :environment_id])
   end

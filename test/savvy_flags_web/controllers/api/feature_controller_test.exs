@@ -1,29 +1,38 @@
 defmodule SavvyFlagsWeb.Api.FeatureControllerTest do
   use SavvyFlagsWeb.ConnCase
+
   import SavvyFlags.SdkConnectionsFixtures
+  import SavvyFlags.AccountsFixtures
+  import SavvyFlags.FeaturesFixtures
+  import SavvyFlags.ProjectsFixtures
+  import SavvyFlags.EnvironmentsFixtures
+  import SavvyFlags.AttributesFixtures
 
   setup do
-    environment = SavvyFlags.EnvironmentsFixtures.environment_fixture()
-    attribute = SavvyFlags.AttributesFixtures.attribute_fixture(%{name: "email"})
-    project = SavvyFlags.ProjectsFixtures.project_fixture()
+    user = user_fixture()
+    environment = environment_fixture()
+    attribute_fixture(%{name: "email"})
+    project = project_fixture()
 
     feature =
-      SavvyFlags.FeaturesFixtures.feature_fixture(%{
+      feature_with_published_revision_fixture(%{
+        current_user_id: user.id,
         key: "myapp:nav-v2",
         project_id: project.id,
-        environments_enabled: [environment.id],
-        default_value: %{type: :boolean, value: "false"}
+        environments_enabled: [environment.id]
       })
 
-    SavvyFlags.FeaturesFixtures.feature_rule_fixture(%{
+    [revision] = feature.revisions
+
+    rule_fixture(%{
       description: "Test",
-      feature_id: feature.id,
+      revision_id: revision.id,
       environment_id: environment.id,
       value: %{type: :boolean, value: "true"},
-      feature_rule_conditions: [
+      conditions: [
         %{
           position: 1,
-          attribute_id: attribute.id,
+          attribute: "email",
           type: :match_regex,
           value: ".*\.gmail.com$"
         }

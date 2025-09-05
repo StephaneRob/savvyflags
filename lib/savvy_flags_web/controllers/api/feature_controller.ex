@@ -4,7 +4,7 @@ defmodule SavvyFlagsWeb.Api.FeatureController do
   alias SavvyFlags.FeatureCache
   alias SavvyFlags.SdkConnections
   alias SavvyFlags.Features
-  alias SavvyFlags.Features.FeatureEvaluator
+  alias SavvyFlags.Features.Evaluator
 
   plug :fetch_sdk_connection
   plug :rate_limit_sdk when action in [:create, :index]
@@ -20,7 +20,7 @@ defmodule SavvyFlagsWeb.Api.FeatureController do
         rules
       else
         rules =
-          FeatureEvaluator.build_plain_payload(current_sdk_connection, conn.assigns.features)
+          Evaluator.build_plain_payload(current_sdk_connection, conn.assigns.features)
 
         FeatureCache.put(rule_cache_key(current_sdk_connection), rules)
         rules
@@ -39,7 +39,7 @@ defmodule SavvyFlagsWeb.Api.FeatureController do
         evaluated_feature_flags
       else
         evaluated_feature_flags =
-          FeatureEvaluator.eval(conn.assigns.features, params)
+          Evaluator.eval(conn.assigns.features, params)
 
         FeatureCache.put(
           evaluated_cache_key(current_sdk_connection, params_hash),

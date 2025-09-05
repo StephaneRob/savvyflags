@@ -12,10 +12,7 @@ defmodule SavvyFlags.Attributes do
   def list_attributes do
     query =
       from a in Attribute,
-        left_join: frc in assoc(a, :feature_rule_conditions),
-        select_merge: %{feature_rule_conditions_count: count(frc.reference)},
-        order_by: [asc: a.id],
-        group_by: a.id
+        order_by: [asc: a.id]
 
     Repo.all(query)
   end

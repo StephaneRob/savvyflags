@@ -51,13 +51,10 @@ defmodule SavvyFlagsWeb.ProjectLive.Index do
   def mount(_params, _session, socket) do
     projects = Projects.list_projects()
 
-    socket =
-      socket
-      |> stream_configure(:projects, dom_id: & &1.reference)
-      |> stream(:projects, projects)
-      |> assign(:active_nav, :projects)
-
-    {:ok, socket}
+    socket
+    |> stream_configure(:projects, dom_id: & &1.reference)
+    |> stream(:projects, projects)
+    |> ok()
   end
 
   @impl true

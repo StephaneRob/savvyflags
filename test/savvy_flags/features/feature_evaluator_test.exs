@@ -1,49 +1,41 @@
-defmodule SavvyFlags.Features.FeatureEvaluatorTest do
-  alias SavvyFlags.Projects
-  alias SavvyFlags.Attributes
-  alias SavvyFlags.Features
-  alias SavvyFlags.Features.FeatureEvaluator
+defmodule SavvyFlags.Features.EvaluatorTest do
   use SavvyFlags.DataCase, async: true
-  alias SavvyFlags.Environments
+
+  alias SavvyFlags.Features.Evaluator
+
+  import SavvyFlags.ProjectsFixtures
+  import SavvyFlags.AttributesFixtures
+  import SavvyFlags.EnvironmentsFixtures
+  import SavvyFlags.AccountsFixtures
+  import SavvyFlags.FeaturesFixtures
 
   setup do
-    user = SavvyFlags.AccountsFixtures.user_fixture()
-    SavvyFlags.AttributesFixtures.attribute_fixture(%{name: "email"})
-    SavvyFlags.EnvironmentsFixtures.environment_fixture()
-    SavvyFlags.ProjectsFixtures.project_fixture()
+    user = user_fixture()
+    attribute = attribute_fixture(%{name: "email"})
+    environment = environment_fixture()
+    project = project_fixture()
 
-    environments = Environments.list_environments()
-    projects = Projects.list_projects()
-    attributes = Attributes.list_attributes()
-
-    %{environments: environments, user: user, projects: projects, attributes: attributes}
+    %{environment: environment, user: user, project: project, attribute: attribute}
   end
 
   describe "eval/2" do
-    setup %{projects: projects, attributes: attributes, environments: environments} do
-      [project] = projects
-
+    setup %{project: project, attribute: attribute, environment: environment, user: user} do
       feature =
-        SavvyFlags.FeaturesFixtures.feature_fixture(%{
+        feature_with_published_revision_fixture(%{
           key: "test",
           project_id: project.id,
-          default_value: %{
-            value: "false",
-            type: :boolean
-          }
+          current_user_id: user.id
         })
 
-      email_attribute = Enum.find(attributes, &(&1.name == "email"))
-
-      Features.create_feature_rule(%{
-        feature_id: feature.id,
+      rule_fixture(%{
+        revision_id: feature.last_revision.id,
         description: "Activate for example users",
         value: %{type: :boolean, value: "true"},
-        environment_id: List.first(environments).id,
-        feature_rule_conditions: [
+        environment_id: environment.id,
+        conditions: [
           %{
             position: 1,
-            attribute_id: email_attribute.id,
+            attribute: attribute.name,
             type: :match_regex,
             value: ".*\.example.co$"
           }
@@ -51,82 +43,82 @@ defmodule SavvyFlags.Features.FeatureEvaluatorTest do
       })
 
       feature =
-        SavvyFlags.Repo.preload(feature, feature_rules: [feature_rule_conditions: :attribute])
+        SavvyFlags.Repo.preload(feature, current_revision: :rules)
 
       %{feature: feature}
     end
 
     test "eval feature", %{feature: feature} do
-      assert result = FeatureEvaluator.eval([feature], %{})
+      assert result = Evaluator.eval([feature], %{})
       assert result == %{"test" => "false"}
     end
   end
 
   describe "compare/2" do
     test "with :match_regex" do
-      assert FeatureEvaluator.compare("stephane@example.co", ".*example\.co$", :match_regex)
-      refute FeatureEvaluator.compare("stephane@gmail.co", ".*example\.co$", :match_regex)
-      assert FeatureEvaluator.compare("stephane@gmail.co", "^stephane.*", :match_regex)
-      refute FeatureEvaluator.compare("robert@gmail.co", "^stephane.*", :match_regex)
+      assert Evaluator.compare("stephane@example.co", ".*example\.co$", :match_regex)
+      refute Evaluator.compare("stephane@gmail.co", ".*example\.co$", :match_regex)
+      assert Evaluator.compare("stephane@gmail.co", "^stephane.*", :match_regex)
+      refute Evaluator.compare("robert@gmail.co", "^stephane.*", :match_regex)
     end
 
     test "with :not_match_regex" do
-      refute FeatureEvaluator.compare("stephane@example.co", ".*example\.co$", :not_match_regex)
-      assert FeatureEvaluator.compare("stephane@gmail.co", ".*example\.co$", :not_match_regex)
-      refute FeatureEvaluator.compare("stephane@gmail.co", "^stephane.*", :not_match_regex)
-      assert FeatureEvaluator.compare("robert@gmail.co", "^stephane.*", :not_match_regex)
+      refute Evaluator.compare("stephane@example.co", ".*example\.co$", :not_match_regex)
+      assert Evaluator.compare("stephane@gmail.co", ".*example\.co$", :not_match_regex)
+      refute Evaluator.compare("stephane@gmail.co", "^stephane.*", :not_match_regex)
+      assert Evaluator.compare("robert@gmail.co", "^stephane.*", :not_match_regex)
     end
 
     test "with :equal" do
-      assert FeatureEvaluator.compare("stephane@example.co", "stephane@example.co", :equal)
-      refute FeatureEvaluator.compare("stephane@gmail.co", "whatever", :equal)
+      assert Evaluator.compare("stephane@example.co", "stephane@example.co", :equal)
+      refute Evaluator.compare("stephane@gmail.co", "whatever", :equal)
     end
 
     test "with :not_equal" do
-      refute FeatureEvaluator.compare("stephane@example.co", "stephane@example.co", :not_equal)
-      assert FeatureEvaluator.compare("stephane@gmail.co", "whatever", :not_equal)
+      refute Evaluator.compare("stephane@example.co", "stephane@example.co", :not_equal)
+      assert Evaluator.compare("stephane@gmail.co", "whatever", :not_equal)
     end
 
     test "with :gt" do
-      assert FeatureEvaluator.compare("10", "8", :gt)
-      refute FeatureEvaluator.compare("10", "10", :gt)
-      refute FeatureEvaluator.compare("10", "20", :gt)
-      refute FeatureEvaluator.compare("", "20", :gt)
-      assert FeatureEvaluator.compare(10, "8", :gt)
+      assert Evaluator.compare("10", "8", :gt)
+      refute Evaluator.compare("10", "10", :gt)
+      refute Evaluator.compare("10", "20", :gt)
+      refute Evaluator.compare("", "20", :gt)
+      assert Evaluator.compare(10, "8", :gt)
     end
 
     test "with :gt_or_equal" do
-      assert FeatureEvaluator.compare("10", "8", :gt_or_equal)
-      assert FeatureEvaluator.compare("10", "10", :gt_or_equal)
-      refute FeatureEvaluator.compare("10", "20", :gt_or_equal)
+      assert Evaluator.compare("10", "8", :gt_or_equal)
+      assert Evaluator.compare("10", "10", :gt_or_equal)
+      refute Evaluator.compare("10", "20", :gt_or_equal)
     end
 
     test "with :lt" do
-      refute FeatureEvaluator.compare("10", "8", :lt)
-      refute FeatureEvaluator.compare("10", "10", :lt)
-      assert FeatureEvaluator.compare("10", "20", :lt)
+      refute Evaluator.compare("10", "8", :lt)
+      refute Evaluator.compare("10", "10", :lt)
+      assert Evaluator.compare("10", "20", :lt)
     end
 
     test "with :lt_or_equal" do
-      refute FeatureEvaluator.compare("10", "8", :lt_or_equal)
-      assert FeatureEvaluator.compare("10", "10", :lt_or_equal)
-      assert FeatureEvaluator.compare("10", "20", :lt_or_equal)
+      refute Evaluator.compare("10", "8", :lt_or_equal)
+      assert Evaluator.compare("10", "10", :lt_or_equal)
+      assert Evaluator.compare("10", "20", :lt_or_equal)
     end
 
     test "with :sample" do
-      refute FeatureEvaluator.compare("stephane", "30", :sample)
-      refute FeatureEvaluator.compare(nil, "30", :sample)
-      assert FeatureEvaluator.compare("Johny", "30", :sample)
+      refute Evaluator.compare("stephane", "30", :sample)
+      refute Evaluator.compare(nil, "30", :sample)
+      assert Evaluator.compare("Johny", "30", :sample)
     end
 
     test "with :in" do
-      assert FeatureEvaluator.compare("stephane", "stephane, john", :in)
-      refute FeatureEvaluator.compare("Johny", "stephane, john", :in)
+      assert Evaluator.compare("stephane", "stephane, john", :in)
+      refute Evaluator.compare("Johny", "stephane, john", :in)
     end
 
     test "with :not_in" do
-      refute FeatureEvaluator.compare("stephane", "stephane, john", :not_in)
-      assert FeatureEvaluator.compare("Johny", "stephane, john", :not_in)
+      refute Evaluator.compare("stephane", "stephane, john", :not_in)
+      assert Evaluator.compare("Johny", "stephane, john", :not_in)
     end
   end
 end

@@ -34,15 +34,11 @@ defmodule SavvyFlagsWeb.AttributeLive.Index do
       </:action>
       <:action :let={{id, attribute}}>
         <.link
-          :if={length(attribute.feature_rule_conditions) == 0}
           phx-click={JS.push("delete", value: %{id: attribute.id}) |> hide("##{id}")}
           data-confirm="Are you sure?"
         >
           Delete
         </.link>
-        <span :if={length(attribute.feature_rule_conditions) > 0} class="text-gray-500 text-xs italic">
-          Linked to {length(attribute.feature_rule_conditions)} rules
-        </span>
       </:action>
     </.table>
 
@@ -66,15 +62,12 @@ defmodule SavvyFlagsWeb.AttributeLive.Index do
 
   @impl true
   def mount(_params, _session, socket) do
-    attributes = Attributes.list_attributes(:feature_rule_conditions)
+    attributes = Attributes.list_attributes()
 
-    socket =
-      socket
-      |> stream_configure(:attributes, dom_id: & &1.reference)
-      |> stream(:attributes, attributes)
-      |> assign(:active_nav, :attributes)
-
-    {:ok, socket}
+    socket
+    |> stream_configure(:attributes, dom_id: & &1.reference)
+    |> stream(:attributes, attributes)
+    |> ok()
   end
 
   @impl true

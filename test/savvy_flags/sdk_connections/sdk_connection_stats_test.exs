@@ -1,6 +1,7 @@
 defmodule SavvyFlags.SdkConnections.SdkConnectionStatsTest do
   use SavvyFlags.DataCase, async: false
 
+  import SavvyFlags.AccountsFixtures
   import SavvyFlags.ProjectsFixtures
   import SavvyFlags.FeaturesFixtures
   import SavvyFlags.SdkConnectionsFixtures
@@ -16,9 +17,10 @@ defmodule SavvyFlags.SdkConnections.SdkConnectionStatsTest do
   end
 
   test "update_stats increments request counter and touches feature last_used_at" do
+    user = user_fixture()
     environment = environment_fixture()
     project = project_fixture()
-    feature = feature_fixture(%{project_id: project.id})
+    feature = feature_fixture(%{project_id: project.id, current_user_id: user.id})
 
     sdk_connection =
       sdk_connection_fixture(%{
@@ -38,10 +40,10 @@ defmodule SavvyFlags.SdkConnections.SdkConnectionStatsTest do
     assert row.count == 1
 
     # feature last_used_at touched
-    f1 = Features.get_feature!(feature.id) |> Repo.preload(feature_stats: :environment)
-    feature_stat = List.first(f1.feature_stats)
-    assert feature_stat.last_used_at != nil
-    assert feature_stat.environment.id == environment.id
+    f1 = Features.get_feature!(feature.id) |> Repo.preload(stats: :environment)
+    stat = List.first(f1.stats)
+    assert stat.last_used_at != nil
+    assert stat.environment.id == environment.id
 
     # calling again within the time window increments the same row
     SavvyFlags.SdkConnections.SdkConnectionStats.update_stats(meta)
@@ -49,10 +51,10 @@ defmodule SavvyFlags.SdkConnections.SdkConnectionStatsTest do
 
     row2 = Repo.one(req_query)
     assert row2.count == 2
-    f1 = Features.get_feature!(feature.id) |> Repo.preload(feature_stats: :environment)
-    feature_stat_2 = List.first(f1.feature_stats)
-    assert feature_stat_2.last_used_at != nil
-    assert feature_stat_2.id == feature_stat.id
-    assert feature_stat_2.environment.id == environment.id
+    f1 = Features.get_feature!(feature.id) |> Repo.preload(stats: :environment)
+    stat_2 = List.first(f1.stats)
+    assert stat_2.last_used_at != nil
+    assert stat_2.id == stat.id
+    assert stat_2.environment.id == environment.id
   end
 end

@@ -22,6 +22,7 @@ defmodule SavvyFlagsWeb.UI do
       import SavvyFlagsWeb.UI.Check
       import SavvyFlagsWeb.UI.Toggle
       import SavvyFlagsWeb.UI.NavLink
+      import SavvyFlagsWeb.UI.Dropdown
     end
   end
 end
