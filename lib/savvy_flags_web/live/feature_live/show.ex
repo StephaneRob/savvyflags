@@ -29,12 +29,12 @@ defmodule SavvyFlagsWeb.FeatureLive.Show do
       if can?(current_user, feature) do
         environments = Environments.list_environments(feature, environment_ids)
 
-        socket
-        |> assign(:feature, feature)
-        |> assign(:page_title, "Feature #{feature.key}")
-        |> assign(:environments, environments)
-        # FIXME: use on_mount + attach_hook
-        |> assign(:active_nav, :features)
+        assign(socket,
+          page_title: "Feature #{feature.key}",
+          feature: feature,
+          publish_modal: false,
+          environments: environments
+        )
       else
         socket
         |> put_flash(
@@ -89,36 +89,32 @@ defmodule SavvyFlagsWeb.FeatureLive.Show do
         0
       end
 
-    socket
-    |> assign(:page_title, "New rule")
-    |> assign(:rule, %Rule{
-      revision_id: feature.last_revision.id,
-      environment_id: environment.id,
-      conditions: [],
-      position: position,
-      value: %FeatureValue{type: feature.last_revision.value.type, value: ""}
-    })
+    assign(
+      socket,
+      page_title: "New rule",
+      rule: %Rule{
+        revision_id: feature.last_revision.id,
+        environment_id: environment.id,
+        conditions: [],
+        position: position,
+        value: %FeatureValue{type: feature.last_revision.value.type, value: ""}
+      }
+    )
   end
 
   defp apply_sub_action(socket, :fr_edit, %{"rule" => rule_reference}) do
     environment = socket.assigns.environment
     rule = Enum.find(environment.rules, &(&1.reference == rule_reference))
-
-    socket
-    |> assign(:page_title, "Edit rule")
-    |> assign(:rule, rule)
+    assign(socket, page_title: "Edit rule", rule: rule)
   end
 
   defp apply_sub_action(socket, _, _), do: socket
 
   @impl true
   def handle_event("reposition", params, socket) do
-    feaure_rules = socket.assigns.environment.rules
-    Features.reorder_rules(feaure_rules, params)
-
-    socket
-    |> refresh()
-    |> noreply()
+    rules = socket.assigns.environment.rules
+    Features.reorder_rules(rules, params)
+    refresh(socket, "Rules correctly updated!")
   end
 
   @impl true
@@ -197,14 +193,23 @@ defmodule SavvyFlagsWeb.FeatureLive.Show do
   end
 
   @impl true
-  def handle_info(
-        {SavvyFlagsWeb.FeatureLive.RuleComponent, {:deleted, rule}},
+  def handle_event("delete-rule", %{"reference" => reference}, socket) do
+    rule = Enum.find(socket.assigns.environment.rules, &(&1.reference == reference))
+    feature = socket.assigns.feature
+    current_user = socket.assigns.current_user
+
+    case Features.Revisions.delete_rule_with_revision(
+           rule,
+           feature,
+           current_user
+         ) do
+      {:ok, _} ->
+        refresh(socket, "Feature rule deleted")
+
+      {:error, _} ->
         socket
-      ) do
-    if rule.id do
-      refresh(socket, "Feature Rule correctly deleted")
-    else
-      noreply(socket)
+        |> put_flash(:error, "Error while deleting the feature rule")
+        |> noreply()
     end
   end
 
@@ -241,9 +246,7 @@ defmodule SavvyFlagsWeb.FeatureLive.Show do
   defp can?(%User{role: :member, full_access: true}, %Feature{}), do: true
 
   defp can?(user, feature) do
-    features =
-      Features.list_features_for_user(user.id)
-
+    features = Features.list_features_for_user(user.id)
     Enum.any?(features, &(&1.id == feature.id))
   end
 end

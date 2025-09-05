@@ -1,6 +1,7 @@
 defmodule SavvyFlags.Environments do
   import Ecto.Query, warn: false
 
+  alias SavvyFlags.Features.Revision
   alias SavvyFlags.Repo
   alias SavvyFlags.Features.Rule
   alias SavvyFlags.Environments.Environment
@@ -17,7 +18,7 @@ defmodule SavvyFlags.Environments do
     query =
       from e in Environment,
         where: e.id in ^environment_ids,
-        preload: [rules: ^rules_preload_query(feature)]
+        preload: [rules: ^rules_preload_query(feature.last_revision)]
 
     Repo.all(query)
   end
@@ -25,7 +26,7 @@ defmodule SavvyFlags.Environments do
   def list_environments(feature) do
     query =
       from e in Environment,
-        preload: [rules: ^rules_preload_query(feature)]
+        preload: [rules: ^rules_preload_query(feature.last_revision)]
 
     Repo.all(query)
   end
@@ -68,7 +69,7 @@ defmodule SavvyFlags.Environments do
     Environment.changeset(environment, attrs)
   end
 
-  defp rules_preload_query(revision) do
+  defp rules_preload_query(%Revision{} = revision) do
     from fr in Rule,
       where: fr.revision_id == ^revision.id,
       order_by: [asc: :position]

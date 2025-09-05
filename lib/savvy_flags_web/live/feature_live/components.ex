@@ -3,6 +3,8 @@ defmodule SavvyFlagsWeb.FeatureLive.Components do
   alias SavvyFlags.Features
   alias SavvyFlags.Features.Feature
 
+  import SavvyFlagsWeb.FeatureLive.Components.Rule
+
   attr :feature, Feature, required: true
 
   def feature_detail(assigns) do
@@ -38,61 +40,48 @@ defmodule SavvyFlagsWeb.FeatureLive.Components do
               Last used at: <.stats feature={@feature} />
             </p>
           </div>
-          <div>
-            <p class="text-sm font-semibold mb-2">
-              Revision: <.badge value={"v#{@feature.last_revision.revision_number}"} />
-              <.badge
-                :if={@feature.last_revision.status == :draft}
-                value={"#{@feature.last_revision.status}"}
-                variant="warning"
-              />
-              <.badge
-                :if={@feature.last_revision.status == :published}
-                value={"#{@feature.last_revision.status}"}
-                variant="success"
-              />
-            </p>
-          </div>
         </div>
       </div>
       <div>
-        <%= if @feature.last_revision.status == :draft do %>
-          <.button variant="primary" phx-click="publish-revision">Publish</.button>
-          <.button
-            :if={@feature.last_revision.revision_number > 1}
-            variant="warning"
-            phx-click="discard-revision"
-          >
-            Discard
-          </.button>
-        <% else %>
-          <ul>
-            <li :for={revision <- @feature.revisions}>
-              <.badge value={"v#{revision.revision_number}"} variant="code" />
-              <.badge
-                :if={revision.status == :draft}
-                value={"#{revision.status}"}
-                variant="warning"
-              />
-              <.badge
-                :if={revision.status == :unpublished}
-                value={"#{revision.status}"}
-              />
-              <.badge
-                :if={revision.status == :published}
-                value={"#{revision.status}"}
-                variant="success"
-              />
+        <ul>
+          <li :for={revision <- @feature.revisions} class="flex justify-end items-start gap-3 mb-1">
+            <%= if revision.status == :draft do %>
+              <.button variant="primary" phx-click="publish-revision" size="sm">Publish</.button>
               <.button
-                :if={revision.status != :published}
-                phx-click="rollback"
-                phx-value-revision-number={revision.revision_number}
+                :if={revision.revision_number > 1}
+                variant="warning"
+                phx-click="discard-revision"
+                size="sm"
               >
-                Rollback to
+                Discard
               </.button>
-            </li>
-          </ul>
-        <% end %>
+            <% end %>
+            <.button
+              :if={revision.status == :unpublished}
+              phx-click="rollback"
+              phx-value-revision-number={revision.revision_number}
+              size="sm"
+              variant="ghost"
+            >
+              revert
+            </.button>
+            <.badge value={"v#{revision.revision_number}"} variant="code" />
+            <.badge
+              :if={revision.status == :draft}
+              value={"#{revision.status}"}
+              variant="warning"
+            />
+            <.badge
+              :if={revision.status == :unpublished}
+              value={"#{revision.status}"}
+            />
+            <.badge
+              :if={revision.status == :published}
+              value={"#{revision.status}"}
+              variant="success"
+            />
+          </li>
+        </ul>
       </div>
     </div>
     """
@@ -127,14 +116,12 @@ defmodule SavvyFlagsWeb.FeatureLive.Components do
         </div>
       </div>
       <div phx-hook="Sortable" id="frc-list">
-        <%= for rule <- @environment.rules do %>
-          <.rule
-            feature={@feature}
-            rule={rule}
-            environment={@environment}
-            current_user={@current_user}
-          />
-        <% end %>
+        <.rule
+          :for={rule <- @environment.rules}
+          feature={@feature}
+          environment={@environment}
+          rule={rule}
+        />
       </div>
     </div>
     <div :if={@environment.rules != []} class="mt-5">
@@ -143,73 +130,6 @@ defmodule SavvyFlagsWeb.FeatureLive.Components do
           Add rule
         </.button>
       </.link>
-    </div>
-    """
-  end
-
-  attr :feature, :map
-  attr :rule, :map
-  attr :environment, :map
-  attr :current_user, :map
-
-  def rule(assigns) do
-    scheduled_class = if(assigns[:rule].scheduled, do: "opacity-50")
-    assigns = Map.put(assigns, :scheduled_class, scheduled_class)
-
-    ~H"""
-    <div class="rounded shadow overflow-hidden mb-5" data-id={@rule.id}>
-      <div class="drag-ghost:opacity-0">
-        <div class={[
-          "feature-rule py-4 pl-9 pr-4  bg-white relative
-    drag-item:focus-within:ring-0 drag-item:focus-within:ring-offset-0 drag-ghost:bg-gray-100 drag-ghost:border-0 drag-ghost:ring-0",
-          @scheduled_class
-        ]}>
-          <span class="absolute top-3.5 left-2 z-50 cursor-grab text-gray-400 handler">
-            <.icon name="hero-bars-3" class="w-5 h-5" />
-          </span>
-          <.live_component
-            module={SavvyFlagsWeb.FeatureLive.RuleComponent}
-            id={@rule.reference || :new}
-            rule={@rule}
-            feature={@feature}
-            current_user={@current_user}
-            environment={@environment}
-          />
-        </div>
-        <div
-          :if={@rule.scheduled}
-          class="opacity-100 bg-neutral-300 text-neutral-900 py-2 px-2 text-xs italic"
-        >
-          <p>
-            <.icon name="hero-clock" class="h-4" /> This rule will be automatically activated on
-            <span
-              id={"fr-scheduled-#{@rule.reference}"}
-              phx-hook="LocalTime"
-              title={@rule.scheduled_at}
-            >
-              {@rule.scheduled_at}
-            </span>
-            ({@rule.scheduled_at} UTC)
-          </p>
-        </div>
-
-        <div
-          :if={!is_nil(@rule.activated_at) && !@rule.scheduled_at}
-          class="opacity-100 bg-green-300 text-green-900 py-2 px-2 text-xs italic"
-        >
-          <p>
-            <.icon name="hero-check" class="h-4" /> This rule has been automatically activated on
-            <span
-              id={"fr-activated-#{@rule.reference}"}
-              phx-hook="LocalTime"
-              title={@rule.activated_at}
-            >
-              {@rule.activated_at}
-            </span>
-            ({@rule.activated_at} UTC)
-          </p>
-        </div>
-      </div>
     </div>
     """
   end

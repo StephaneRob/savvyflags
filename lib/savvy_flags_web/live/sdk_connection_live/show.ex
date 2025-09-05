@@ -79,11 +79,13 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Show do
     plain_rules = Jason.encode!(payload, pretty: true)
 
     socket
-    |> assign(sdk_connection: sdk_connection, active_nav: :sdk_connections)
-    |> assign(:attributes, Attributes.list_attributes())
-    |> assign(:page_title, "SDK connection #{sdk_connection.reference}")
-    |> assign(:features, features)
-    |> assign(:plain_rules, plain_rules)
+    |> assign(
+      page_title: "SDK connection #{sdk_connection.reference}",
+      features: features,
+      plain_rules: plain_rules,
+      sdk_connection: sdk_connection,
+      attributes: Attributes.list_attributes()
+    )
     |> ok()
   end
 
@@ -91,9 +93,8 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Show do
   def handle_info(:tick, socket) do
     socket =
       if socket.assigns.live_action == :metrics do
-        socket = add_usage_data(socket)
         Process.send_after(self(), :tick, 5000)
-        socket
+        add_usage_data(socket)
       else
         socket
       end
@@ -114,9 +115,7 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Show do
 
   defp apply_action(socket, :metrics, _) do
     if connected?(socket), do: Process.send_after(self(), :tick, 5000)
-
-    socket
-    |> add_usage_data()
+    add_usage_data(socket)
   end
 
   defp apply_action(socket, :sandbox, _) do
@@ -136,10 +135,11 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Show do
     last_24_hours = List.last(global_count)
     last_30_days = Enum.sum(global_count)
 
-    socket
-    |> assign(:data, data_30_days)
-    |> assign(:last_30_days, last_30_days)
-    |> assign(:last_24_hours, last_24_hours)
+    assign(socket,
+      data: data_30_days,
+      last_30_days: last_30_days,
+      last_24_hours: last_24_hours
+    )
   end
 
   @impl true
@@ -164,10 +164,7 @@ defmodule SavvyFlagsWeb.SdkConnectionLive.Show do
     features = socket.assigns.features
     evaluated_feature_flags = Evaluator.eval(features, payload)
     evaluation_result = Jason.encode!(evaluated_feature_flags, pretty: true)
-
-    socket
-    |> assign(:json_valid?, true)
-    |> assign(:evaluation_result, evaluation_result)
+    assign(socket, json_valid?: true, evaluation_result: evaluation_result)
   end
 
   defp eval_sdk(socket, _, _) do

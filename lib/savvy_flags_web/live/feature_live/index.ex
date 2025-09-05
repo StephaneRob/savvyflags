@@ -17,7 +17,6 @@ defmodule SavvyFlagsWeb.FeatureLive.Index do
     |> stream(:features, features, reset: true)
     |> assign(:projects, Projects.list_projects())
     |> assign(:filter, %{})
-    |> assign(:active_nav, :features)
     |> ok()
   end
 

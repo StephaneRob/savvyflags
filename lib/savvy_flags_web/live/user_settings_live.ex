@@ -108,17 +108,15 @@ defmodule SavvyFlagsWeb.UserSettingsLive do
     email_changeset = Accounts.change_user_email(user)
     password_changeset = Accounts.change_user_password(user)
 
-    socket =
-      socket
-      |> assign(:current_password, nil)
-      |> assign(:email_form_current_password, nil)
-      |> assign(:current_email, user.email)
-      |> assign(:email_form, to_form(email_changeset))
-      |> assign(:password_form, to_form(password_changeset))
-      |> assign(:mfa_enabled, Accounts.mfa_enabled?(user))
-      |> assign(:trigger_submit, false)
-
-    {:ok, socket}
+    socket
+    |> assign(:current_password, nil)
+    |> assign(:email_form_current_password, nil)
+    |> assign(:current_email, user.email)
+    |> assign(:email_form, to_form(email_changeset))
+    |> assign(:password_form, to_form(password_changeset))
+    |> assign(:mfa_enabled, Accounts.mfa_enabled?(user))
+    |> assign(:trigger_submit, false)
+    |> ok()
   end
 
   def handle_event("validate_email", params, socket) do

@@ -55,8 +55,7 @@ defmodule SavvyFlagsWeb do
         layout: {SavvyFlagsWeb.Layouts, :app}
 
       unquote(html_helpers())
-      def ok(socket), do: {:ok, socket}
-      def noreply(socket), do: {:noreply, socket}
+      unquote(live_view_helpers())
     end
   end
 
@@ -65,8 +64,7 @@ defmodule SavvyFlagsWeb do
       use Phoenix.LiveComponent
 
       unquote(html_helpers())
-      def ok(socket), do: {:ok, socket}
-      def noreply(socket), do: {:noreply, socket}
+      unquote(live_view_helpers())
     end
   end
 
@@ -96,6 +94,14 @@ defmodule SavvyFlagsWeb do
 
       # Routes generation with the ~p sigil
       unquote(verified_routes())
+    end
+  end
+
+  defp live_view_helpers do
+    quote do
+      def ok(socket, opts), do: {:ok, socket, opts}
+      def ok(socket), do: {:ok, socket}
+      def noreply(socket), do: {:noreply, socket}
     end
   end
 

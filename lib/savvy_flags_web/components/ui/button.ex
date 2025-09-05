@@ -25,7 +25,7 @@ defmodule SavvyFlagsWeb.UI.Button do
       class={
         Tails.classes([
           "phx-submit-loading:opacity-75 font-semibold",
-          "rounded-lg px-4 text-sm py-2 cursor-pointer",
+          "px-4 text-sm py-2 cursor-pointer",
           variant(@variant),
           size(@size),
           @class
@@ -40,8 +40,8 @@ defmodule SavvyFlagsWeb.UI.Button do
 
   defp size(size) do
     case size do
-      "lg" -> "py-1.5 px-4"
-      "sm" -> "py-0.5 px-3 text-xs"
+      "lg" -> "py-1.5 px-4 rounded-lg"
+      "sm" -> "py-0.5 px-3 text-xs rounded"
     end
   end
 

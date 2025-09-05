@@ -54,7 +54,6 @@ defmodule SavvyFlagsWeb.ConfigurationLive do
     changeset = Configurations.change_configuration(configuration)
 
     socket
-    |> assign(:active_nav, :configuration)
     |> assign(:configuration, configuration)
     |> assign_form(changeset)
     |> ok()

@@ -64,13 +64,10 @@ defmodule SavvyFlagsWeb.AttributeLive.Index do
   def mount(_params, _session, socket) do
     attributes = Attributes.list_attributes()
 
-    socket =
-      socket
-      |> stream_configure(:attributes, dom_id: & &1.reference)
-      |> stream(:attributes, attributes)
-      |> assign(:active_nav, :attributes)
-
-    {:ok, socket}
+    socket
+    |> stream_configure(:attributes, dom_id: & &1.reference)
+    |> stream(:attributes, attributes)
+    |> ok()
   end
 
   @impl true

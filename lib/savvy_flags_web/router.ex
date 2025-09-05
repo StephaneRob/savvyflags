@@ -79,6 +79,7 @@ defmodule SavvyFlagsWeb.Router do
         on_mount: [
           {SavvyFlagsWeb.UserAuth, :ensure_authenticated},
           {SavvyFlagsWeb.UserAuth, :check_mfa}
+          # SavvyFlagsWeb.ActiveNav
         ] do
         SavvyFlagsWeb.Router.Features.routes()
         SavvyFlagsWeb.Router.SdkConnections.routes()
