@@ -1,9 +1,11 @@
 defmodule SavvyFlagsWeb.FeatureLive.Components do
   use SavvyFlagsWeb, :html
+
   alias SavvyFlags.Features
   alias SavvyFlags.Features.Feature
 
   import SavvyFlagsWeb.FeatureLive.Components.Rule
+  import SavvyFlagsWeb.FeatureLive.Components.Revision
 
   attr :feature, Feature, required: true
 
@@ -42,46 +44,40 @@ defmodule SavvyFlagsWeb.FeatureLive.Components do
           </div>
         </div>
       </div>
-      <div>
-        <ul>
-          <li :for={revision <- @feature.revisions} class="flex justify-end items-start gap-3 mb-1">
-            <%= if revision.status == :draft do %>
-              <.button variant="primary" phx-click="publish-revision" size="sm">Publish</.button>
-              <.button
-                :if={revision.revision_number > 1}
-                variant="warning"
-                phx-click="discard-revision"
-                size="sm"
-              >
-                Discard
-              </.button>
-            <% end %>
+      <div class="text-right">
+        <p class="font-bold">Revisions</p>
+        <div class="flex gap-4">
+          <%= if @feature.last_revision.status == :draft do %>
+            <.button variant="primary" phx-click="publish-revision" size="sm">Publish</.button>
             <.button
-              :if={revision.status == :unpublished}
-              phx-click="rollback"
-              phx-value-revision-number={revision.revision_number}
+              :if={@feature.last_revision.revision_number > 1}
+              variant="outline"
+              phx-click="discard-revision"
               size="sm"
-              variant="ghost"
             >
-              revert
+              Discard
             </.button>
-            <.badge value={"v#{revision.revision_number}"} variant="code" />
-            <.badge
-              :if={revision.status == :draft}
-              value={"#{revision.status}"}
-              variant="warning"
-            />
-            <.badge
-              :if={revision.status == :unpublished}
-              value={"#{revision.status}"}
-            />
-            <.badge
-              :if={revision.status == :published}
-              value={"#{revision.status}"}
-              variant="success"
-            />
-          </li>
-        </ul>
+          <% end %>
+          <.dropdown id="revision-dropdown">
+            <:dropdown_button>
+              <.revision revision={@feature.last_revision} />
+              <.icon name="hero-chevron-down-solid" class="ml-2 h-4 w-4" />
+            </:dropdown_button>
+
+            <.dropdown_item
+              :for={revision <- @feature.revisions}
+              :if={revision.id != @feature.last_revision.id}
+            >
+              <div
+                class="flex gap-4"
+                phx-click="rollback"
+                phx-value-revision-number={revision.revision_number}
+              >
+                <.revision revision={revision} />
+              </div>
+            </.dropdown_item>
+          </.dropdown>
+        </div>
       </div>
     </div>
     """

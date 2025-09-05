@@ -1,9 +1,9 @@
 defmodule SavvyFlagsWeb.FeatureLive.Components.Rule do
-  alias SavvyFlags.Environments.Environment
   use SavvyFlagsWeb, :html
 
   alias SavvyFlags.Features.Rule
   alias SavvyFlags.Features.Feature
+  alias SavvyFlags.Environments.Environment
 
   attr :feature, Feature, required: true
   attr :rule, Rule, required: true
